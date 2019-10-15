@@ -1,30 +1,28 @@
 #Héctor David Salazar Schz, A01207471.
+#Melanie Vielma Saldana, A00818905.
 #Diseño de compiladores Ago-Dic 2019. ITESM.
-#Lexer y Parser - Jubilo
+#Jubilo
 import ply.lex as lex
 import ply.yacc as yacc
 import sys
 
 #List of language tokens
 tokens = [
-    'PROGRAM', 'MAIN','ID',
-    'FUNC', 'PRINT', 'READ',
-    'IF', 'ELSE', 'WHILE', 'RETURN',
-    'INT_TYPE','FLOAT_TYPE','BOOL_TYPE',
-    'CHAR_TYPE','STRING_TYPE','VOID','PLUS_OP',
-    'MINUS_OP','MULT_OP','DIV_OP',
-    'EQUAL_OP','EQUAL_LOG','LESS_LOG',
-    'LEQUAL_LOG','GREAT_LOG','GEQUAL_LOG',
-    'DIFF_LOG','LPAREN','RPAREN',
-    'LBRACK','RBRACK', 'LCURLY', 'RCURLY', 'COMMA',
-    'SEMIC', 'COLON', 'ZEROS', 'ONES',
-    'SUM','FACT','MEAN',
-    'MEDIAN','MODE','STDEV',
-    'VAR','SORT','TRANSP',
-    'PLOT2D','PLOT3D','READCSV',
-    'WRITECSV','OR_LOG','AND_LOG',
-    'FLOAT_CTE','INT_CTE','BOOL_CTE',
-    'CHAR_CTE','STRING_CTE'
+    'PROGRAM','VOID','MAIN','ID','FUNC','COMMENT', #palabras de programa
+    'PRINT','READ','RETURN','IF','ELSE','WHILE', #palabras de programa, condiciones y ciclos
+    'INT_TYPE','FLOAT_TYPE','BOOL_TYPE','CHAR_TYPE','STRING_TYPE', #tipos de datos
+    'PLUS_OP','MINUS_OP','MULT_OP','DIV_OP','EQUAL_OP', #operadores
+    'EQUAL_LOG','LESS_LOG','LEQUAL_LOG','GREAT_LOG', #operadores logicos
+    'GEQUAL_LOG','DIFF_LOG','OR_LOG','AND_LOG', #operadores logicos
+    'LPAREN','RPAREN','LBRACK','RBRACK','LCURLY','RCURLY', #simbolos para conjuntos
+    'COMMA','SEMIC','COLON', #simbolos para conjuntos
+    'ARRANGE','ZEROS','ONES','SUM','FACT', #funciones especiales
+    'MEAN','MEDIAN','MODE','STDEV','VAR', #funciones especiales
+    'COVARIANCE','CORRELATION', 'SORT','TRANSPOSE', #funciones especiales
+    'READCSV','EXPORTCSV', 'PLOTHIST','PLOTLINE', #funciones especiales
+    'EXCHANGE','LINEAREG', 'RANDINT','RANDFLOAT', #funciones especiales
+    'RANDINTMAT','RANDFLOATMAT', #funciones especiales
+    'FLOAT_CTE','INT_CTE','BOOL_CTE','CHAR_CTE','STRING_CTE' #constantes
 ]
 
 #Defining token Reg Expressions
@@ -32,13 +30,13 @@ t_PLUS_OP = r'\+'
 t_MINUS_OP = r'-'
 t_MULT_OP = r'\*'
 t_DIV_OP = r'/'
-t_EQUAL_OP = r'='
-t_EQUAL_LOG = r'=='
+t_EQUAL_OP = r'\='
+t_EQUAL_LOG = r'\=\='
 t_LESS_LOG = r'\<'
-t_LEQUAL_LOG = r'\<='
+t_LEQUAL_LOG = r'\<\='
 t_GREAT_LOG = r'\>'
-t_GEQUAL_LOG = r'\>='
-t_DIFF_LOG = r'\!='
+t_GEQUAL_LOG = r'\>\='
+t_DIFF_LOG = r'\!\='
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_LBRACK = r'\['
@@ -65,11 +63,22 @@ def t_STRING_CTE(t):
     t.value = str(t.value)
     return t
 
+def t_CHAR_CTE(t):
+    r'\'[a-z][a-zA-Z0-9_]\''
+    t.value = chr(t.value)
+    return t
+
+def t_COMMENT(t):
+    r'\~.*'
+    return t
+
 #Recognizing string literals
 def t_ID(t):
     r'[a-z][a-zA-Z0-9_]*'
     if t.value == 'program':
         t.type = 'PROGRAM'
+    elif t.value == 'void':
+        t.type = 'VOID'
     elif t.value == 'main':
         t.type = 'MAIN'
     elif t.value == 'func':
@@ -94,8 +103,6 @@ def t_ID(t):
         t.type = 'CHAR_TYPE'
     elif t.value == 'string':
         t.type = 'STRING_TYPE'
-    elif t.value == 'void':
-        t.type = 'VOID'
     elif t.value == 'true' or t.value == 'TRUE':
         t.type = 'BOOL_CTE'
     elif t.value == 'false' or t.value == 'FALSE':
@@ -104,6 +111,8 @@ def t_ID(t):
         t.type = 'OR_LOG'
     elif t.value == 'and' or t.value == 'AND':
         t.type = 'AND_LOG'
+    elif t.value == 'arrange':
+        t.type = 'ARRANGE'
     elif t.value == 'zeros':
         t.type = 'ZEROS'
     elif t.value == 'ones':
@@ -125,17 +134,31 @@ def t_ID(t):
     elif t.value == 'sort':
         t.type = 'SORT'
     elif t.value == 'transpose':
-        t.type = 'TRANSP'
-    elif t.value == 'plot2d':
-        t.type = 'PLOT2D'
-    elif t.value == 'plot3d':
-        t.type = 'PLOT3D'
-    elif t.value == 'readCSV':
+        t.type = 'TRANSPOSE'
+    elif t.value == 'covariance':
+        t.type = 'COVARIANCE'
+    elif t.value == 'correlation':
+        t.type = 'CORRELATION'
+    elif t.value == 'readcsv':
         t.type = 'READCSV'
-    elif t.value == 'writeCSV':
-        t.type = 'WRITECSV'
-    elif t.value == 'var':
-        t.type = 'VAR'
+    elif t.value == 'exportcsv':
+        t.type = 'EXPORTCSV'
+    elif t.value == 'plothist':
+        t.type = 'PLOTHIST'
+    elif t.value == 'plotline':
+        t.type = 'PLOTLINE'
+    elif t.value == 'exchange':
+        t.type = 'EXCHANGE'
+    elif t.value == 'linear':
+        t.type = 'LINEAREG'
+    elif t.value == 'randint':
+        t.type = 'RANDINT'
+    elif t.value == 'randfloat':
+        t.type = 'RANDFLOAT'
+    elif t.value == 'randintmat':
+        t.type = 'RANDINTMAT'
+    elif t.value == 'randfloatmat':
+        t.type = 'RANDFLOATMAT'
     elif t.value == 'return':
         t.type == 'RETURN'
     else:
