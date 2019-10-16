@@ -5,6 +5,8 @@
 import ply.lex as lex
 import ply.yacc as yacc
 import sys
+from Jubilo_CuboSemantico import *
+from Jubilo_CuboSemantico_SFuncs import *
 
 #List of language tokens
 tokens = [
@@ -466,7 +468,7 @@ def p_var_cte_predicate(p):
 
 def p_sfunc(p):
     '''
-    sfunc : ARRANGE spfunc_params
+    sfunc : ARRANGE spfunc_two_params
           | ZEROS spfunc_params
           | ONES spfunc_params
           | SUM spfunc_params
