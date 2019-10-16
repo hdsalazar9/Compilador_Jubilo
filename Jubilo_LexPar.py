@@ -466,26 +466,51 @@ def p_var_cte_predicate(p):
 
 def p_sfunc(p):
     '''
-    sfunc : ZEROS sfunc_params
-          | ONES sfunc_params
-          | SUM sfunc_params
-          | FACT sfunc_params
-          | MEAN sfunc_params
-          | MEDIAN sfunc_params
-          | MODE sfunc_params
-          | STDEV sfunc_params
-          | VAR sfunc_params
-          | SORT sfunc_params
-          | TRANSP sfunc_params
-          | READCSV sfunc_params
-          | WRITECSV sfunc_params
-          | PLOT2D LPAREN full_exp COMMA full_exp RPAREN
-          | PLOT3D LPAREN full_exp COMMA full_exp COMMA full_exp RPAREN
+    sfunc : ARRANGE spfunc_params
+          | ZEROS spfunc_params
+          | ONES spfunc_params
+          | SUM spfunc_params
+          | FACT spfunc_params
+          | MEAN spfunc_params
+          | MEDIAN spfunc_params
+          | MODE spfunc_params
+          | STDEV spfunc_params
+          | VAR spfunc_params
+          | SORT spfunc_params
+          | TRANSPOSE spfunc_params
+          | READCSV spfunc_params
+          | PLOTHIST spfunc_params
+          | COVARIANCE spfunc_two_params
+          | CORRELATION spfunc_two_params
+          | EXPORTCSV spfunc_two_params
+          | PLOTLINE spfunc_two_params
+          | EXCHANGE spfunc_two_params
+          | LINEAREG spfunc_two_params
+          | RANDINT spfunc_three_params
+          | RANDFLOAT spfunc_three_params
+          | RANDINTMAT spfunc_four_params
+          | RANDFLOATMAT spfunc_four_params
     '''
 
-def p_sfunc_params(p):
+def p_spfunc_params(p):
     '''
-    sfunc_params : LPAREN full_exp RPAREN
+    spfunc_params : LPAREN full_exp RPAREN
+    '''
+
+def p_spfunc_two_params(p):
+    '''
+    spfunc_two_params : LPAREN full_exp COMMA full_exp RPAREN
+    '''
+
+def p_spfunc_three_params(p):
+    '''
+    spfunc_three_params : spfunc_two_params
+                        | LPAREN full_exp COMMA full_exp COMMA full_exp RPAREN
+    '''
+
+def p_spfunc_four_params(p):
+    '''
+    spfunc_four_params : LPAREN full_exp COMMA full_exp COMMA full_exp COMMA full_exp RPAREN
     '''
 
 def p_empty(p):
