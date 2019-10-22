@@ -7,6 +7,7 @@ import ply.yacc as yacc
 import sys
 from Jubilo_CuboSemantico import *
 from Jubilo_CuboSemantico_SFuncs import *
+from Jubilo_DirFunc import * 
 
 #List of language tokens
 tokens = [
