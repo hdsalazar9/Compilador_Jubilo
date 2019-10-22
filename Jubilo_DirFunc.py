@@ -11,34 +11,60 @@ class Jubilo_DirFunc:
     def __init__(self):
         '''
         Diccionario de directorio de Funciones
-        diccionario = {nombre: tipo}
+        diccionario = {nombre: nombre, tipo, cantParametros, variables}
         nombre : nombre de la funcion que se va a guardar
         tipo : tipo de la funcion que se va a guardar
-        variable : 
+        cantParametros : Cantidad de parametros para la funcion definida
+        variables : objeto de tipo Jubilo_TablaVars para guardar las variables
         '''
         self.diccionario = {} #inicializa el diccionario de funciones
 
-    def add_function(self, nombre, tipo):
-        if (nombre in self.diccionario.keys()):
+    '''
+    Funcion para saber si existe una funcion en el diccionario.
+    ~ TODO:
+    '''
+    def exist_function(self, nombre):
+        return nombre in self.diccionario.keys()
+
+    '''
+    Funcion para agregar una nueva funcion al Diccionario
+    ~TODO:
+    '''
+    def add_function(self, nombre, tipo, cantParametros):
+        #Revisar que no se haya definido ya una funcion con el mismo nombre
+        if self.exist_function(nombre):
             print("Error: Funcion ", str(nombre), " ya definida.\n")
             #TODO: Maybe ocupa un return.
         else:
+            #Si no existe, crear la funcion con sus respectivos valores
             self.diccionario[nombre] = {
-
+                'nombre' : nombre,
+                'tipo': tipo,
+                'cantParametros' : cantParametros,
+                'variables' : Jubilo_TablaVars()
             }
 
-
-
-
-    def addFunc(self, nombre, tipo, quadCount):
-        """ Adjunta la funcion especificada al Directorio de Funciones
-            Args:
-             nombre : Nombre de la funcion a aniadir.
-             tipo   : Tipo de dato que le pertenece a la funcion.
-             quadCount : Cantidad de cuádruplos generados hasta el momento.
-        """
-        if (nombre in DirFunc.instance.val):
-            print('Function {} previously defined.'.format(nombre))
-            sys.exit()
+    '''
+    Funcion que busca y regresa una funcion y sus datos, del diccionaro.
+    ~ TODO:
+    '''
+    def search_function(self, nombre):
+        if self.exist_function(nombre):
+            return self.diccionario[nombre]
         else:
-            DirFunc.instance.val[nombre] = (tipo, {}, 0, quadCount)
+            return None
+
+    '''
+    Funcion que intenta agregar una variable a la funcion nombre
+    ~ TODO:
+    '''
+    def add_varToFunction(self, nombre, nombreVar, tipoVar, renglonesVar, columnasVar):
+        '''
+        Dentro de mi diccionario de funciones, ir a la funcion nombre
+        En su atributo variables e intentar agregar la nueva variable.
+        Si regresa verdadero se pudo crear, si regresa falso ya existia esa variable.
+        '''
+        if self.diccionaro[nombre]['variables'].add_var(nombreVar, tipoVar, renglonesVar, columnasVar):
+            print("Variable: ", nombreVar, " creada en la funcion: ", nombre)
+        else:
+            print("Error: No es posible crear variable: ", nombreVar, ", en la funcion: ", nombre)
