@@ -55,3 +55,13 @@ class Jubilo_TablaVars:
             return self.diccionario[nombre]
         else:
             return None
+
+    '''
+    Funcion que busca y regresa el tipo de una variable, del diccionario.
+    ~ TODO:
+    '''
+    def search_varType(self, nombre):
+        if self.exist_var(nombre):
+            return self.diccionario[nombre]['tipo']
+        else:
+            return None

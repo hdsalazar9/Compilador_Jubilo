@@ -1,13 +1,76 @@
-#Héctor David Salazar Schz, A01207471.
+#Hector David Salazar Schz, A01207471.
 #Melanie Vielma Saldana, A00818905.
-#Diseño de compiladores Ago-Dic 2019. ITESM.
+#Diseno de compiladores Ago-Dic 2019. ITESM.
 #Jubilo
 import ply.lex as lex
 import ply.yacc as yacc
 import sys
 from Jubilo_CuboSemantico import *
 from Jubilo_CuboSemantico_SFuncs import *
-from Jubilo_DirFunc import * 
+from Jubilo_DirFunc import *
+
+'''
+Objetos para la generacion de cuadruplos
+'''
+dirFunciones = Jubilo_DirFunc() #Toma el objeto de clase DirFunc para validar la existecia de funciones
+operValida = Jubilo_CuboSemantico() # Toma el objeto de clase CuboSemantico para validar operaciones
+funcValida = Jubilo_CuboSemantico_SFuncs() #Toma el objeto de clase CuboSemanticoSFuncs para validar funciones
+
+'''
+Pilas para la generacion de cuadruplos
+'''
+pOperandos = [] # pila que almacena operandos de la expresion
+pOperadores = [] # pila que almacena operadores de la expresion
+pTipos = [] # pila que almacena los tipos de los operandos de la expresion
+
+'''
+Variables para validacion de funciones
+'''
+currentFunction = 'globals' # string nombre de funcion actual
+
+'''
+Funciones para simular y manejar pilas (push, pop, top)
+'''
+#Toma el ultimo elemento de Pila de Operandos
+def popOperandos():
+    global pOperandos
+    return pOperandos.pop()
+
+#Toma el ultimo elemento de Pila de Operandos
+def popOperadores():
+    global pOperadores
+    return pOperadores.pop()
+
+#Toma el ultimo elemento de Pila de Tipos
+def popTipos():
+    global pTipos
+    return pTipos.pop()
+
+#Simula push stack para anadir nuevo operando
+def pushOperando(operando):
+    global pOperandos
+    pOperandos.append(operando)
+
+#Simula push stack para anadir nuevo operador
+def pushOperador(operador):
+    global pOperadores
+    pOperadores.append(operador)
+
+#Simula push stack para anadir nuevo tipo
+def pushTipo(tipo):
+    global pTipos
+    pTipos.append(tipo)
+
+
+
+
+
+
+
+
+
+
+
 
 #List of language tokens
 tokens = [
@@ -173,6 +236,8 @@ def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
+
+
 #Grammar Rules por Parser
 
 #Declaracion de id programa inicial
@@ -193,7 +258,7 @@ def p_vars(p):
 #Predicados posibles para la declaracion de variables
 def p_vars_predicate(p):
     '''
-    vars_predicate : SEMIC
+    vars_predicate : pnVarSimple SEMIC
                    | vars_assign SEMIC
                    | vars_array SEMIC
     '''
@@ -316,6 +381,11 @@ def p_main(p):
     '''
     main : VOID MAIN LPAREN RPAREN bloque
     '''
+    global dirFunciones
+    global currentFunction
+    currentFunction = 'main'
+    #Creacion de main en el directorio de funciones, con cero parametros
+    dirFunciones.add_function(currentFunction, p[1], 0)
 
 def p_bloque(p):
     'bloque : LCURLY bloque_predicate RCURLY'
@@ -458,7 +528,7 @@ def p_var_cte(p):
     '''
     var_cte : sfunc
             | constante
-            | ID var_cte_predicate
+            | ID pnQuadGen1 var_cte_predicate
     '''
 
 def p_var_cte_predicate(p):
@@ -523,6 +593,41 @@ def p_empty(p):
 def p_error(p):
     print("Syntax error at '%s'" % p)
 
+
+##Funciones de generacion de cuadruplos
+'''
+Punto neuralgico de anadir id a pOper y pType
+'''
+def p_pnQuadGen1(p):
+    '''
+        pnQuadGen1 :
+    '''
+    global currentFunction
+    global dirFunciones
+    global pOperandos
+    global pTipos
+    varId = p[-1]
+    pushOperador(varId)
+    varTipo = dirFunciones.search_varType(currentFunction, varId)
+    pushTipo(varTipo)
+    print(pOperadores)
+    print(pTipos)
+
+'''
+Punto neuralgico recepcion de variable y su anadidura a su variable
+'''
+def p_pnVarSimple(p):
+    '''
+        pnVarSimple :
+    '''
+    varTipo = p[-2]
+    varId = p[-1]
+    global currentFunction
+    global dirFunciones
+    #Agregar variable simple a directorio de funciones en current function
+    dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
+
+
 #Defining Lexer & Parser
 parser = yacc.yacc()
 lexer = lex.lex()
@@ -531,8 +636,9 @@ lexer = lex.lex()
 while True:
 
     #Input of lines of code
+    print("Jubilo >")
     try:
-        s = input("Jubilo > ")
+        s = input("> ")
     except EOFError:
         break
     parser.parse(s)

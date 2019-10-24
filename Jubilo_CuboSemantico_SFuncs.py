@@ -82,15 +82,15 @@ class Jubilo_CuboSemantico_SFuncs:
             ( 'lineareg' , 'float' , 'float' ) : 'float',
             ( 'lineareg' , 'float' , 'int' ) : 'float',
 
-            '''
-            Para las funciones de random se considera que se validara que
-            ambos rangos vengan y se manden como enteros, antes de mandar a
-            validar si son tipos de datos validos. Es decir revisar que ambos
-            limites sean o enteros o flotantes.
-            Al igual para el numero de renglones y columnas en las matrices:
-            se validara que ambos vengan enteros antes de validar que el tipo
-            de dato se puede ingresar en la funcion especial.
-            '''
+
+            #Para las funciones de random se considera que se validara que
+            #ambos rangos vengan y se manden como enteros, antes de mandar a
+            #validar si son tipos de datos validos. Es decir revisar que ambos
+            #limites sean o enteros o flotantes.
+            #Al igual para el numero de renglones y columnas en las matrices:
+            #se validara que ambos vengan enteros antes de validar que el tipo
+            #de dato se puede ingresar en la funcion especial.
+
             ( 'randint' , 'int' , 'int' ) : 'int', #1er int son limites, 2do int es cant de randoms
             ( 'randint' , 'int' , '' ) : 'int',
             ( 'randfloat' , 'float' , 'int' ) : 'float', #1er float son limites, 2do int es cant de randoms
