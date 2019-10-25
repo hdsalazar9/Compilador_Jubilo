@@ -1,0 +1,14 @@
+program velocirraptor:
+
+	int enterote = 2
+	float flotante = 3.865
+
+func int funciontonta(int a, int b){
+	float res;
+	res = a - b;
+	return res;
+}
+
+void main(){
+	functiontonta(int enterote, float flotante)
+}

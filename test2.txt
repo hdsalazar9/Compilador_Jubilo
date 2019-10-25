@@ -1,0 +1,21 @@
+program tiranosaurio:
+
+	int a;
+
+func int suma(){
+	int alfa;
+	int beta;
+	int res;
+
+	res = alfa + beta;
+	return res;
+}
+
+void main(){
+	float x;
+	float b;
+
+	x = a / b;
+	print(x)
+	
+}
