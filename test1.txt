@@ -1,0 +1,8 @@
+program estegosaurio: 
+	
+	int a;
+	float b;
+
+void main(){
+	a = b * 2;
+}

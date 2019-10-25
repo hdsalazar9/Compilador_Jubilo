@@ -19,7 +19,6 @@ class Jubilo_DirFunc:
         '''
         #inicializa el diccionario de funciones con globals, funcion auxiliar para las variables globales
         self.diccionario = {'globals': {'nombre' : 'globals', 'tipo' : 'void', 'cantParametros' : 0, 'variables' : Jubilo_TablaVars()}}
-
     '''
     Funcion para saber si existe una funcion en el diccionario.
     ~ TODO:
