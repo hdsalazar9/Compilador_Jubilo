@@ -64,7 +64,19 @@ class Jubilo_DirFunc:
         En su atributo variables e intentar agregar la nueva variable.
         Si regresa verdadero se pudo crear, si regresa falso ya existia esa variable.
         '''
-        if self.diccionaro[nombre]['variables'].add_var(nombreVar, tipoVar, renglonesVar, columnasVar):
+        if self.diccionario[nombre]['variables'].add_var(nombreVar, tipoVar, renglonesVar, columnasVar):
             print("Variable: ", nombreVar, " creada en la funcion: ", nombre)
         else:
             print("Error: No es posible crear variable: ", nombreVar, ", en la funcion: ", nombre)
+        print(self.diccionario[nombre]['variables'].diccionario)
+
+    '''
+    Funcion que regresa el tipo de una variable previamente creada en las funciones
+    ~TODO:
+    '''
+    def search_varType(self, nombre, nombreVar):
+        if self.diccionario[nombre]['variables'].exist_var(nombreVar):
+            return self.diccionario[nombre]['variables'].search_varType(nombreVar)
+        else:
+            print("Error: Variable: ", nombreVar ," no existe en este contexto: ", nombre)
+            return None
