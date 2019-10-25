@@ -17,8 +17,8 @@ class Jubilo_DirFunc:
         cantParametros : Cantidad de parametros para la funcion definida
         variables : objeto de tipo Jubilo_TablaVars para guardar las variables
         '''
-        self.diccionario = {} #inicializa el diccionario de funciones
-
+        #inicializa el diccionario de funciones con globals, funcion auxiliar para las variables globales
+        self.diccionario = {'globals': {'nombre' : 'globals', 'tipo' : 'void', 'cantParametros' : 0, 'variables' : Jubilo_TablaVars()}}
     '''
     Funcion para saber si existe una funcion en el diccionario.
     ~ TODO:
