@@ -24,9 +24,17 @@ pOperadores = [] # pila que almacena operadores de la expresion
 pTipos = [] # pila que almacena los tipos de los operandos de la expresion
 
 '''
+Constantes
+'''
+GLOBAL_CONTEXT = 'globals'
+OPERADORES_SUMARESTA = ['+','-']
+OPERADORES_MULTDIV = ['*','/']
+
+'''
 Variables para validacion de funciones
 '''
-currentFunction = 'globals' # string nombre de funcion actual
+currentFunction = GLOBAL_CONTEXT # string nombre de funcion actual
+
 
 '''
 Funciones para simular y manejar pilas (push, pop, top)
@@ -61,16 +69,47 @@ def pushTipo(tipo):
     global pTipos
     pTipos.append(tipo)
 
+#Obtiene el ultimo operando ingresado a la pila de operandos
+def topOperador():
+    global pOperadores
+    last = len(pOperadores) - 1
+    if (last < 0):
+        return 'empty'
+    return pOperadores[last]
+
+#Obtiene el ultimo tipo ingresado a la pila de tipos
+def topTipo():
+    global pTipos
+    last = len(pTipos) - 1
+    if(last < 0):
+        return 'empty'
+    return pTipos[last]
+
+#Obtiene el siguiente temporal de la pila simualda de temporales
+def nextAvail():
+    global contIntTemp
+    global contFloatTemp
+    global contBoolTemp
+    global contCharTemp
+
+    #if
 
 
 
 
 
 
+'''
+Funciones para desplegar mensajes genericos como errores o infos
+'''
+#Funcion para mostrar un mensaje de error generico entre un operador
+#y dos operandos junto con su tipo
+def printErrorOperacionInvalida(rOp, rTy, lOp, lTy, Op):
+    print("Error: Imposible realizar operacion ({}) con operadores {} de tipo {} y {} de tipo {}.".format(rOp, rTy, lOp, lTy, Op))
 
-
-
-
+#Funcion para desplegar como quedaria
+def printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result):
+    print("Quadruplo: ('{}','{}','{}','{}')".format(quad_operator, quad_leftOper, quad_rightOper, quad_result))
 
 #List of language tokens
 tokens = [
@@ -253,7 +292,7 @@ def p_vars(p):
     vars : type ID vars_predicate vars
          | empty
     '''
-    print("Variable", "de tipo ", " creada.")
+    #print("Variable", "de tipo ", " creada.")
 
 #Predicados posibles para la declaracion de variables
 def p_vars_predicate(p):
@@ -406,6 +445,7 @@ def p_estatuto(p):
              | sfunc_call
              | ciclo
              | retorno
+             | vars
     '''
     print("Creado estatuto de:", p[1])
 
@@ -493,13 +533,13 @@ def p_expresion_operador(p):
 
 def p_exp(p):
     '''
-    exp : termino exp_predicate
+    exp : termino exp_predicate pnQuadGenExp4
     '''
 
 def p_exp_predicate(p):
     '''
-    exp_predicate : PLUS_OP exp
-                  | MINUS_OP exp
+    exp_predicate : PLUS_OP pnQuadGenExp2 exp
+                  | MINUS_OP pnQuadGenExp2 exp
                   | empty
     '''
 
@@ -508,8 +548,8 @@ def p_termino(p):
 
 def p_termino_predicate(p):
     '''
-    termino_predicate : DIV_OP termino
-                      | MULT_OP termino
+    termino_predicate : DIV_OP pnQuadGenExp3 termino
+                      | MULT_OP pnQuadGenExp3 termino
                       | empty
     '''
 
@@ -528,7 +568,7 @@ def p_var_cte(p):
     '''
     var_cte : sfunc
             | constante
-            | ID pnQuadGen1 var_cte_predicate
+            | ID pnQuadGenExp1 var_cte_predicate
     '''
 
 def p_var_cte_predicate(p):
@@ -598,20 +638,79 @@ def p_error(p):
 '''
 Punto neuralgico de anadir id a pOper y pType
 '''
-def p_pnQuadGen1(p):
+def p_pnQuadGenExp1(p):
     '''
-        pnQuadGen1 :
+        pnQuadGenExp1 :
     '''
     global currentFunction
     global dirFunciones
     global pOperandos
     global pTipos
     varId = p[-1]
-    pushOperador(varId)
+    #Buscar el tipo de la variable en su contexto, sino la encuentra buscar en globales
     varTipo = dirFunciones.search_varType(currentFunction, varId)
+    if not varTipo:
+        varTipo = dirFunciones.search_varType(GLOBAL_CONTEXT, varId)
+    #Si tampoco se encuentra en el contexto global, no existe la variable
+    if not varTipo:
+        print("Error: Variable ", varId , " no declarada.")
+        return
+    pushOperando(varId)
     pushTipo(varTipo)
-    print(pOperadores)
-    print(pTipos)
+    print("pnQuadGenExp1 poperando: ", pOperadores)
+    print("pnQuadGenExp1 ptipos: ", pTipos)
+
+'''
+Punto neuralgico para anadir un + o - a la pila de operadores pOper
+'''
+def p_pnQuadGenExp2(p):
+    '''
+    pnQuadGenExp2 :
+    '''
+    global pOperadores
+    if p[-1] not in OPERADORES_SUMARESTA:
+        print("Error: Operador no esperado.")
+    else:
+        pushOperador(p[-1])
+        print("pnQuadGenExp2 pOperadores: ", pOperadores)
+
+'''
+Punto neuralgico para anadir un * o / a la pila de operadores pOper
+'''
+def p_pnQuadGenExp3(p):
+    '''
+    pnQuadGenExp3 :
+    '''
+    global pOperadores
+    if p[-1] not in OPERADORES_MULTDIV:
+        print("Error: Operador no esperado.")
+    else:
+        pushOperador(p[-1])
+        print("pnQuadGenExp3 pOperadores: ", pOperadores)
+
+'''
+Punto neuralgico para checar si el top de la pila de operadores es
+un + o - para crear el cuadruplo de esa operacion
+'''
+def p_pnQuadGenExp4(p):
+    '''
+    pnQuadGenExp4 :
+    '''
+    if topOperador() in OPERADORES_SUMARESTA:
+        quad_rightOper = popOperandos()
+        quad_rightType = popTipos()
+        quad_leftOper = popOperandos()
+        quad_leftType = popTipos()
+        quad_operator = popOperadores()
+        quad_tipo = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
+        if quad_tipo == 'error':
+            printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
+        else:
+            #get quad_result de getAvailable()
+            #auxQuad = genQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result)
+            #push auxQuad a los Quadruplos
+            quad_result = 'temporal de momento'
+            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result)
 
 '''
 Punto neuralgico recepcion de variable y su anadidura a su variable
@@ -624,6 +723,8 @@ def p_pnVarSimple(p):
     varId = p[-1]
     global currentFunction
     global dirFunciones
+    print("tipo: ",p[-2])
+    print("nombre: ", p[-1])
     #Agregar variable simple a directorio de funciones en current function
     dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
 
@@ -632,6 +733,17 @@ def p_pnVarSimple(p):
 parser = yacc.yacc()
 lexer = lex.lex()
 
+'''
+Para probar el parser desde archivo
+'''
+name = ''
+
+with open(name, 'r') as archive:
+    s = archive.read()
+print(name)
+parser.parse(s)
+
+'''
 #Testing of parser
 while True:
 
@@ -642,3 +754,4 @@ while True:
     except EOFError:
         break
     parser.parse(s)
+'''

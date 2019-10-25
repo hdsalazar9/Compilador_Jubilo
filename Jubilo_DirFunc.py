@@ -72,7 +72,7 @@ class Jubilo_DirFunc:
         print(self.diccionario[nombre]['variables'].diccionario)
 
     '''
-    Funcion que regresa el tipo de una variable previamente creada en las funciones
+    Funcion que regresa el string del tipo de una variable previamente creada en las funciones
     ~TODO:
     '''
     def search_varType(self, nombre, nombreVar):
