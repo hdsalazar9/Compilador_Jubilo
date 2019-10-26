@@ -99,13 +99,13 @@ class Jubilo_CuboSemantico_SFuncs:
             ( 'randfloatmat' , 'float' , 'int' ) : 'float' #1er float son limites, 2do int es cant de rows/columns
         }
 
-        '''
-        Funcion de obtencion de tipo de valor resultado de la funcion especial
-        con los tipos de valor pasados como parametro
-        '''
-        def get_tipo(self, spfunc, operando1, operando2):
-            try:
-                resultado = self.diccionario[spfunc, operando1, operando1]
-            except:
-                resultado = 'error'
-            return resultado
+    '''
+    Funcion de obtencion de tipo de valor resultado de la funcion especial
+    con los tipos de valor pasados como parametro
+    '''
+    def get_tipo(self, spfunc, operando1, operando2):
+        try:
+            resultado = self.diccionario[spfunc, operando1, operando1]
+        except:
+            resultado = 'error'
+        return resultado

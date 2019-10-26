@@ -25,8 +25,8 @@ class Jubilo_CuboSemantico:
             ( 'int' , 'int' , '<=' ) : 'bool',
             ( 'int' , 'int' , '>=' ) : 'bool',
             ( 'int' , 'int' , '!=' ) : 'bool',
-            ( 'int' , 'int' , 'OR' ) : 'error',
-            ( 'int' , 'int' , 'AND' ) : 'error',
+            ( 'int' , 'int' , '||' ) : 'error',
+            ( 'int' , 'int' , '&&' ) : 'error',
 
             ( 'int' , 'float' , '+' ) : 'float',
             ( 'int' , 'float' , '-' ) : 'float',
@@ -39,8 +39,8 @@ class Jubilo_CuboSemantico:
             ( 'int' , 'float' , '<=' ) : 'bool',
             ( 'int' , 'float' , '>=' ) : 'bool',
             ( 'int' , 'float' , '!=' ) : 'bool',
-            ( 'int' , 'float' , 'OR' ) : 'error',
-            ( 'int' , 'float' , 'AND' ) : 'error',
+            ( 'int' , 'float' , '||' ) : 'error',
+            ( 'int' , 'float' , '&&' ) : 'error',
 
             ( 'int' , 'bool' , '+' ) : 'error',
             ( 'int' , 'bool' , '-' ) : 'error',
@@ -53,8 +53,8 @@ class Jubilo_CuboSemantico:
             ( 'int' , 'bool' , '<=' ) : 'error',
             ( 'int' , 'bool' , '>=' ) : 'error',
             ( 'int' , 'bool' , '!=' ) : 'error',
-            ( 'int' , 'bool' , 'OR' ) : 'error',
-            ( 'int' , 'bool' , 'AND' ) : 'error',
+            ( 'int' , 'bool' , '||' ) : 'error',
+            ( 'int' , 'bool' , '&&' ) : 'error',
 
             ( 'int' , 'char' , '+' ) : 'error',
             ( 'int' , 'char' , '-' ) : 'error',
@@ -67,8 +67,8 @@ class Jubilo_CuboSemantico:
             ( 'int' , 'char' , '<=' ) : 'error',
             ( 'int' , 'char' , '>=' ) : 'error',
             ( 'int' , 'char' , '!=' ) : 'error',
-            ( 'int' , 'char' , 'OR' ) : 'error',
-            ( 'int' , 'char' , 'AND' ) : 'error',
+            ( 'int' , 'char' , '||' ) : 'error',
+            ( 'int' , 'char' , '&&' ) : 'error',
 
             ( 'float' , 'int' , '+' ) : 'float',
             ( 'float' , 'int' , '-' ) : 'float',
@@ -81,8 +81,8 @@ class Jubilo_CuboSemantico:
             ( 'float' , 'int' , '<=' ) : 'bool',
             ( 'float' , 'int' , '>=' ) : 'bool',
             ( 'float' , 'int' , '!=' ) : 'bool',
-            ( 'float' , 'int' , 'OR' ) : 'error',
-            ( 'float' , 'int' , 'AND' ) : 'error',
+            ( 'float' , 'int' , '||' ) : 'error',
+            ( 'float' , 'int' , '&&' ) : 'error',
 
             ( 'float' , 'float' , '+' ) : 'float',
             ( 'float' , 'float' , '-' ) : 'float',
@@ -95,8 +95,8 @@ class Jubilo_CuboSemantico:
             ( 'float' , 'float' , '<=' ) : 'bool',
             ( 'float' , 'float' , '>=' ) : 'bool',
             ( 'float' , 'float' , '!=' ) : 'bool',
-            ( 'float' , 'float' , 'OR' ) : 'error',
-            ( 'float' , 'float' , 'AND' ) : 'error',
+            ( 'float' , 'float' , '||' ) : 'error',
+            ( 'float' , 'float' , '&&' ) : 'error',
 
             ( 'float' , 'bool' , '+' ) : 'error',
             ( 'float' , 'bool' , '-' ) : 'error',
@@ -109,8 +109,8 @@ class Jubilo_CuboSemantico:
             ( 'float' , 'bool' , '<=' ) : 'error',
             ( 'float' , 'bool' , '>=' ) : 'error',
             ( 'float' , 'bool' , '!=' ) : 'error',
-            ( 'float' , 'bool' , 'OR' ) : 'error',
-            ( 'float' , 'bool' , 'AND' ) : 'error',
+            ( 'float' , 'bool' , '||' ) : 'error',
+            ( 'float' , 'bool' , '&&' ) : 'error',
 
             ( 'float' , 'char' , '+' ) : 'error',
             ( 'float' , 'char' , '-' ) : 'error',
@@ -123,8 +123,8 @@ class Jubilo_CuboSemantico:
             ( 'float' , 'char' , '<=' ) : 'error',
             ( 'float' , 'char' , '>=' ) : 'error',
             ( 'float' , 'char' , '!=' ) : 'error',
-            ( 'float' , 'char' , 'OR' ) : 'error',
-            ( 'float' , 'char' , 'AND' ) : 'error',
+            ( 'float' , 'char' , '||' ) : 'error',
+            ( 'float' , 'char' , '&&' ) : 'error',
 
             ( 'bool' , 'int' , '+' ) : 'error',
             ( 'bool' , 'int' , '-' ) : 'error',
@@ -137,8 +137,8 @@ class Jubilo_CuboSemantico:
             ( 'bool' , 'int' , '<=' ) : 'error',
             ( 'bool' , 'int' , '>=' ) : 'error',
             ( 'bool' , 'int' , '!=' ) : 'error',
-            ( 'bool' , 'int' , 'OR' ) : 'error',
-            ( 'bool' , 'int' , 'AND' ) : 'error',
+            ( 'bool' , 'int' , '||' ) : 'error',
+            ( 'bool' , 'int' , '&&' ) : 'error',
 
             ( 'bool' , 'float' , '+' ) : 'error',
             ( 'bool' , 'float' , '-' ) : 'error',
@@ -151,8 +151,8 @@ class Jubilo_CuboSemantico:
             ( 'bool' , 'float' , '<=' ) : 'error',
             ( 'bool' , 'float' , '>=' ) : 'error',
             ( 'bool' , 'float' , '!=' ) : 'error',
-            ( 'bool' , 'float' , 'OR' ) : 'error',
-            ( 'bool' , 'float' , 'AND' ) : 'error',
+            ( 'bool' , 'float' , '||' ) : 'error',
+            ( 'bool' , 'float' , '&&' ) : 'error',
 
             ( 'bool' , 'bool' , '+' ) : 'error',
             ( 'bool' , 'bool' , '-' ) : 'error',
@@ -165,8 +165,8 @@ class Jubilo_CuboSemantico:
             ( 'bool' , 'bool' , '<=' ) : 'bool',
             ( 'bool' , 'bool' , '>=' ) : 'bool',
             ( 'bool' , 'bool' , '!=' ) : 'bool',
-            ( 'bool' , 'bool' , 'OR' ) : 'bool',
-            ( 'bool' , 'bool' , 'AND' ) : 'bool',
+            ( 'bool' , 'bool' , '||' ) : 'bool',
+            ( 'bool' , 'bool' , '&&' ) : 'bool',
 
             ( 'bool' , 'char' , '+' ) : 'error',
             ( 'bool' , 'char' , '-' ) : 'error',
@@ -179,8 +179,8 @@ class Jubilo_CuboSemantico:
             ( 'bool' , 'char' , '<=' ) : 'error',
             ( 'bool' , 'char' , '>=' ) : 'error',
             ( 'bool' , 'char' , '!=' ) : 'error',
-            ( 'bool' , 'char' , 'OR' ) : 'error',
-            ( 'bool' , 'char' , 'AND' ) : 'error',
+            ( 'bool' , 'char' , '||' ) : 'error',
+            ( 'bool' , 'char' , '&&' ) : 'error',
 
             ( 'char' , 'int' , '+' ) : 'error',
             ( 'char' , 'int' , '-' ) : 'error',
@@ -193,8 +193,8 @@ class Jubilo_CuboSemantico:
             ( 'char' , 'int' , '<=' ) : 'error',
             ( 'char' , 'int' , '>=' ) : 'error',
             ( 'char' , 'int' , '!=' ) : 'error',
-            ( 'char' , 'int' , 'OR' ) : 'error',
-            ( 'char' , 'int' , 'AND' ) : 'error',
+            ( 'char' , 'int' , '||' ) : 'error',
+            ( 'char' , 'int' , '&&' ) : 'error',
 
             ( 'char' , 'float' , '+' ) : 'error',
             ( 'char' , 'float' , '-' ) : 'error',
@@ -207,8 +207,8 @@ class Jubilo_CuboSemantico:
             ( 'char' , 'float' , '<=' ) : 'error',
             ( 'char' , 'float' , '>=' ) : 'error',
             ( 'char' , 'float' , '!=' ) : 'error',
-            ( 'char' , 'float' , 'OR' ) : 'error',
-            ( 'char' , 'float' , 'AND' ) : 'error',
+            ( 'char' , 'float' , '||' ) : 'error',
+            ( 'char' , 'float' , '&&' ) : 'error',
 
             ( 'char' , 'bool' , '+' ) : 'error',
             ( 'char' , 'bool' , '-' ) : 'error',
@@ -221,8 +221,8 @@ class Jubilo_CuboSemantico:
             ( 'char' , 'bool' , '<=' ) : 'error',
             ( 'char' , 'bool' , '>=' ) : 'error',
             ( 'char' , 'bool' , '!=' ) : 'error',
-            ( 'char' , 'bool' , 'OR' ) : 'error',
-            ( 'char' , 'bool' , 'AND' ) : 'error',
+            ( 'char' , 'bool' , '||' ) : 'error',
+            ( 'char' , 'bool' , '&&' ) : 'error',
 
             ( 'char' , 'char' , '+' ) : 'char',
             ( 'char' , 'char' , '-' ) : 'char',
@@ -235,13 +235,13 @@ class Jubilo_CuboSemantico:
             ( 'char' , 'char' , '<=' ) : 'bool',
             ( 'char' , 'char' , '>=' ) : 'bool',
             ( 'char' , 'char' , '!=' ) : 'bool',
-            ( 'char' , 'char' , 'OR' ) : 'error',
-            ( 'char' , 'char' , 'AND' ) : 'error'
+            ( 'char' , 'char' , '||' ) : 'error',
+            ( 'char' , 'char' , '&&' ) : 'error'
         }
 
-        '''
-        Funcion de obtencion de tipo de valor resultado de la operacion
-        (operator) entre los operandos operando1 y operando2
-        '''
-        def get_tipo(self, operando1, operando2, operator):
-            return self.diccionario[operando1, operando2, operator]
+    '''
+    Funcion de obtencion de tipo de valor resultado de la operacion
+    (operator) entre los operandos operando1 y operando2
+    '''
+    def get_tipo(self, operando1, operando2, operator):
+        return self.diccionario[operando1, operando2, operator]

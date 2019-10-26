@@ -19,6 +19,8 @@ class Jubilo_DirFunc:
         '''
         #inicializa el diccionario de funciones con globals, funcion auxiliar para las variables globales
         self.diccionario = {'globals': {'nombre' : 'globals', 'tipo' : 'void', 'cantParametros' : 0, 'variables' : Jubilo_TablaVars()}}
+        print("Funcion creada: globals de tipo void")
+
     '''
     Funcion para saber si existe una funcion en el diccionario.
     ~ TODO:
@@ -43,6 +45,7 @@ class Jubilo_DirFunc:
                 'cantParametros' : cantParametros,
                 'variables' : Jubilo_TablaVars()
             }
+            print("Funcion creada: ", nombre, " de tipo: ", tipo)
 
     '''
     Funcion que busca y regresa una funcion y sus datos, del diccionaro.
@@ -78,5 +81,14 @@ class Jubilo_DirFunc:
         if self.diccionario[nombre]['variables'].exist_var(nombreVar):
             return self.diccionario[nombre]['variables'].search_varType(nombreVar)
         else:
-            print("Error: Variable: ", nombreVar ," no existe en este contexto: ", nombre)
+            print("Warning: Variable: ", nombreVar ," no existe en este contexto: ", nombre)
             return None
+
+    '''
+    Funcion que regresa si existe una variable en la tabla de variables de la funcion dada
+    '''
+    def exist_var(self, nombre, nombreVar):
+        if self.diccionario[nombre]['variables'].exist_var(nombreVar):
+            return True;
+        else:
+            return False;

@@ -29,6 +29,9 @@ Constantes
 GLOBAL_CONTEXT = 'globals'
 OPERADORES_SUMARESTA = ['+','-']
 OPERADORES_MULTDIV = ['*','/']
+OPERADORES_RELACIONALES = ['>', '<', '>=', '<=', '==', '!=']
+OPERADORES_LOGICOS = ['&&', '||']
+OPERADOR_ASIGNACION = ['=']
 
 '''
 Variables para validacion de funciones
@@ -85,27 +88,124 @@ def topTipo():
         return 'empty'
     return pTipos[last]
 
+'''
+Manejo de memoria para funcion funcion nextAvail: toma el siguiente temporal en
+la pila para la generacion de cuadruplos
+'''
+
+BATCH_SIZE = 100 #tamano del espacio de memoria entre diferentes tipos de datos
+
+'''
+Espacios de memoria:
++++++++++++++++++++++++
++globales enteras     + batch_size
++---------------------+
++globales flotantes   + batch_size
++---------------------+
++globales booleanas   + batch_size
++---------------------+
++globales character   + batch_size
++++++++++++++++++++++++
++locales enteras      + batch_size
++---------------------+
++locales flotantes    + batch_size
++---------------------+
++locales booleanas    + batch_size
++---------------------+
++locales character    + batch_size
++++++++++++++++++++++++
++temp enteras         + batch_size
++---------------------+
++temp flotantes       + batch_size
++---------------------+
++temp booleanas       + batch_size
++---------------------+
++temp character       + batch_size
++++++++++++++++++++++++
++constantes enteras   + batch_size
++---------------------+
++constantes flotantes + batch_size
++---------------------+
++constantes booleanas + batch_size
++---------------------+
++constantes character + batch_size
++++++++++++++++++++++++
+'''
+#Declaracion de inicio de espacio de memoria por tipo de memoria
+index_intGlobales = BATCH_SIZE
+index_floatGlobales = index_intGlobales + BATCH_SIZE
+index_boolGlobales = index_floatGlobales + BATCH_SIZE
+index_charGlobales = index_boolGlobales + BATCH_SIZE
+index_intLocales = index_charGlobales + BATCH_SIZE
+index_floatLocales = index_intLocales + BATCH_SIZE
+index_boolLocales = index_floatLocales + BATCH_SIZE
+index_charLocales = index_boolLocales + BATCH_SIZE
+index_intTemporales = index_charLocales + BATCH_SIZE
+index_floatTemporales = index_intTemporales + BATCH_SIZE
+index_boolTemporales = index_floatTemporales + BATCH_SIZE
+index_charTemporales = index_boolTemporales + BATCH_SIZE
+index_intConstantes = index_charTemporales + BATCH_SIZE
+index_floatConstantes = index_intConstantes + BATCH_SIZE
+index_boolConstantes = index_floatConstantes + BATCH_SIZE
+index_charConstantes = index_boolConstantes + BATCH_SIZE
+
+#Declaracion de inicio de index de memoria para temporales
+cont_IntTemp = index_charLocales
+cont_FloatTemp = index_intTemporales
+cont_BoolTemp = index_floatTemporales
+cont_CharTemp = index_boolTemporales
+
 #Obtiene el siguiente temporal de la pila simualda de temporales
-def nextAvail():
-    global contIntTemp
-    global contFloatTemp
-    global contBoolTemp
-    global contCharTemp
+def nextAvail(tipo):
+    global cont_IntTemp
+    global cont_FloatTemp
+    global cont_BoolTemp
+    global cont_CharTemp
 
-    #if
+    if tipo == 'int':
+        if cont_IntTemp < index_intTemporales:
+            avail = cont_IntTemp
+            cont_IntTemp = cont_IntTemp + 1
+        else:
+            printErrorOutOfBounds('Enteras')
 
+    elif tipo == 'float':
+        if cont_FloatTemp < index_floatTemporales:
+            avail = cont_FloatTemp
+            cont_FloatTemp = cont_FloatTemp + 1
+        else:
+            printErrorOutOfBounds('Flotantes')
 
+    elif tipo == 'bool':
+        if cont_BoolTemp < index_boolTemporales:
+            avail = cont_BoolTemp
+            cont_BoolTemp = cont_BoolTemp + 1
+        else:
+           printErrorOutOfBounds('Boleanas')
 
-
-
+    elif tipo == 'char':
+        if cont_CharTemp < index_charTemporales:
+            avail = cont_CharTemp
+            cont_CharTemp = cont_CharTemp + 1
+        else:
+            printErrorOutOfBounds('Caracter')
+    else:
+        avail = -1
+        #En teoria nunca deberia llegar aqui D:!
+        print("Error: Tipo de variable desconocida.")
+    return avail
 
 '''
 Funciones para desplegar mensajes genericos como errores o infos
 '''
+#Funcion para mostrar un mensaje de error cuando se llena los maximos posibles valores temporales
+def printErrorOutOfBounds(tipoDato):
+    print("Error: Memoria llena; demasiadas temporales de tipo {}.".format(tipoDato))
+
 #Funcion para mostrar un mensaje de error generico entre un operador
 #y dos operandos junto con su tipo
 def printErrorOperacionInvalida(rOp, rTy, lOp, lTy, Op):
-    print("Error: Imposible realizar operacion ({}) con operadores {} de tipo {} y {} de tipo {}.".format(rOp, rTy, lOp, lTy, Op))
+    print("Error: Imposible realizar operacion {} con operadores ({} de tipo {}) y ({} de tipo {}).".format(Op, rOp, rTy, lOp, lTy))
 
 #Funcion para desplegar como quedaria
 def printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result):
@@ -131,6 +231,7 @@ tokens = [
 ]
 
 #Defining token Reg Expressions
+
 t_PLUS_OP = r'\+'
 t_MINUS_OP = r'-'
 t_MULT_OP = r'\*'
@@ -142,6 +243,8 @@ t_LEQUAL_LOG = r'\<\='
 t_GREAT_LOG = r'\>'
 t_GEQUAL_LOG = r'\>\='
 t_DIFF_LOG = r'\!\='
+t_OR_LOG = r'\|\|'
+t_AND_LOG = r'\&\&'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_LBRACK = r'\['
@@ -212,10 +315,6 @@ def t_ID(t):
         t.type = 'BOOL_CTE'
     elif t.value == 'false' or t.value == 'FALSE':
         t.type = 'BOOL_CTE'
-    elif t.value == 'or' or t.value == 'OR':
-        t.type = 'OR_LOG'
-    elif t.value == 'and' or t.value == 'AND':
-        t.type = 'AND_LOG'
     elif t.value == 'arrange':
         t.type = 'ARRANGE'
     elif t.value == 'zeros':
@@ -282,17 +381,23 @@ def t_error(t):
 #Declaracion de id programa inicial
 def p_programa(p):
     '''
-    programa : PROGRAM ID COLON vars function main
+    programa : PROGRAM ID COLON vars vars_loop function main
     '''
     print("Programa \"", p[2], "\" terminado.")
 
 #Declaracion de variables, puede ser recursivo y declarar varias variables
 def p_vars(p):
     '''
-    vars : type ID vars_predicate vars
-         | empty
+    vars : type ID vars_predicate
     '''
     #print("Variable", "de tipo ", " creada.")
+
+#Permite que en el inicio de un programa pueda crear varias variables globales
+def p_vars_loop(p):
+    '''
+    vars_loop : vars vars_loop
+              | empty
+    '''
 
 #Predicados posibles para la declaracion de variables
 def p_vars_predicate(p):
@@ -418,13 +523,8 @@ def p_constante_num(p):
 
 def p_main(p):
     '''
-    main : VOID MAIN LPAREN RPAREN bloque
+    main : VOID MAIN LPAREN RPAREN pnCreateFunctionMain bloque
     '''
-    global dirFunciones
-    global currentFunction
-    currentFunction = 'main'
-    #Creacion de main en el directorio de funciones, con cero parametros
-    dirFunciones.add_function(currentFunction, p[1], 0)
 
 def p_bloque(p):
     'bloque : LCURLY bloque_predicate RCURLY'
@@ -432,8 +532,8 @@ def p_bloque(p):
 
 def p_bloque_predicate(p):
     '''
-    bloque_predicate : estatuto bloque_predicate
-                     | empty
+    bloque_predicate : empty
+                     | estatuto bloque_predicate
     '''
 
 def p_estatuto(p):
@@ -456,7 +556,7 @@ def p_sfunc_call(p):
 
 def p_asignacion(p):
     '''
-    asignacion : ID asignacion_predicate EQUAL_OP full_exp SEMIC
+    asignacion : ID pnQuadGenExp1 asignacion_predicate EQUAL_OP pnQuadGenSec1 full_exp pnQuadGenSec2 SEMIC
     '''
     p[0] = "Asignacion"
 
@@ -504,20 +604,20 @@ def p_ciclo(p):
 
 def p_full_exp(p):
     '''
-    full_exp : expresion
-             | log_exp
+    full_exp : expresion log_exp
     '''
 
 def p_log_exp(p):
     '''
-    log_exp : OR_LOG
-            | AND_LOG
+    log_exp : OR_LOG pnQuadGenExp10 full_exp pnQuadGenExp11
+            | AND_LOG pnQuadGenExp10 full_exp pnQuadGenExp11
+            | empty
     '''
 
 def p_expresion(p):
     '''
     expresion : exp
-              | exp expresion_operador exp
+              | exp expresion_operador pnQuadGenExp8 exp pnQuadGenExp9
     '''
     print("Expresion creada.")
 
@@ -530,10 +630,11 @@ def p_expresion_operador(p):
                        | EQUAL_LOG
                        | DIFF_LOG
     '''
+    p[0] = p[1]
 
 def p_exp(p):
     '''
-    exp : termino exp_predicate pnQuadGenExp4
+    exp : termino  pnQuadGenExp4 exp_predicate
     '''
 
 def p_exp_predicate(p):
@@ -544,7 +645,7 @@ def p_exp_predicate(p):
     '''
 
 def p_termino(p):
-    'termino : factor termino_predicate'
+    'termino : factor pnQuadGenExp5 termino_predicate '
 
 def p_termino_predicate(p):
     '''
@@ -556,7 +657,7 @@ def p_termino_predicate(p):
 def p_factor(p):
     '''
     factor : var_cte
-           | LPAREN full_exp RPAREN
+           | LPAREN pnQuadGenExp6 full_exp RPAREN pnQuadGenExp7
     '''
 
 def p_retorno(p):
@@ -627,14 +728,29 @@ def p_spfunc_four_params(p):
     '''
 
 def p_empty(p):
-    'empty : '
+    '''
+    empty :
+    '''
     p[0] = None
 
 def p_error(p):
     print("Syntax error at '%s'" % p)
 
 
-##Funciones de generacion de cuadruplos
+##Puntos neuralgicos
+
+'''
+Creacion de main en el directorio de funciones, con cero parametros
+'''
+def p_pnCreateFunctionMain(p):
+    '''
+    pnCreateFunctionMain :
+    '''
+    global dirFunciones
+    global currentFunction
+    currentFunction = 'main'
+    dirFunciones.add_function(currentFunction, 'void', 0)
+
 '''
 Punto neuralgico de anadir id a pOper y pType
 '''
@@ -657,7 +773,7 @@ def p_pnQuadGenExp1(p):
         return
     pushOperando(varId)
     pushTipo(varTipo)
-    print("pnQuadGenExp1 poperando: ", pOperadores)
+    print("pnQuadGenExp1 poperando: ", pOperandos)
     print("pnQuadGenExp1 ptipos: ", pTipos)
 
 '''
@@ -702,15 +818,181 @@ def p_pnQuadGenExp4(p):
         quad_leftOper = popOperandos()
         quad_leftType = popTipos()
         quad_operator = popOperadores()
-        quad_tipo = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
-        if quad_tipo == 'error':
+        global operValida
+        quad_resultType = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
+        print("Intentar obtener quad de {}, {}, {}, result: {}".format(quad_leftType, quad_rightType, quad_operator, quad_resultType))
+        if quad_resultType == 'error':
             printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
         else:
-            #get quad_result de getAvailable()
-            #auxQuad = genQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result)
-            #push auxQuad a los Quadruplos
-            quad_result = 'temporal de momento'
-            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result)
+            #quad_result = direccion de memoria donde se guardara el tipo de dato
+            quad_resultIndex = nextAvail(quad_resultType)
+            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_resultIndex)
+            pushOperando(quad_resultIndex)
+            pushTipo(quad_resultType)
+
+'''
+Punto neuralgico para checar si el top de la pila de operadores es
+una * o / para crear el cuadruplo de esa operacion
+'''
+def p_pnQuadGenExp5(p):
+    '''
+    pnQuadGenExp5 :
+    '''
+    if topOperador() in OPERADORES_MULTDIV:
+        quad_rightOper = popOperandos()
+        quad_rightType = popTipos()
+        quad_leftOper = popOperandos()
+        quad_leftType = popTipos()
+        quad_operator = popOperadores()
+        global operValida
+        quad_resultType = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
+        print("Intentar obtener quad de {}, {}, {}, result: {}".format(quad_leftType, quad_rightType, quad_operator, quad_resultType))
+        if quad_resultType == 'error':
+            printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
+        else:
+            #quad_result = direccion de memoria donde se guardara el tipo de dato
+            quad_resultIndex = nextAvail(quad_resultType)
+            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_resultIndex)
+            pushOperando(quad_resultIndex)
+            pushTipo(quad_resultType)
+
+'''
+Punto neuralgico para agregar fondo falso por parentesis izquierdo
+'''
+def p_pnQuadGenExp6(p):
+    '''
+    pnQuadGenExp6 :
+    '''
+    pushOperador('(')
+
+'''
+Punto neuralgico para quitar fondo falso por parentesis izquierdo
+'''
+def p_pnQuadGenExp7(p):
+    '''
+    pnQuadGenExp7 :
+    '''
+    tipo = popOperadores()
+
+'''
+Punto neuralgico para meter un operador relacional a la pila de operadores
+'''
+def p_pnQuadGenExp8(p):
+    '''
+    pnQuadGenExp8 :
+    '''
+    global pOperadores
+    if p[-1] not in OPERADORES_RELACIONALES:
+        print("Error: Operador no esperado.")
+    else:
+        pushOperador(p[-1])
+        print("pnQuadGenExp8 pOperadores: ", pOperadores)
+
+'''
+Punto neuralgico para checar si el top de la pila de operadores es un
+> < >= <= == != para crear el cuadruplo de esa operacion
+'''
+def p_pnQuadGenExp9(p):
+    '''
+    pnQuadGenExp9 :
+    '''
+    if topOperador() in OPERADORES_RELACIONALES:
+        quad_rightOper = popOperandos()
+        quad_rightType = popTipos()
+        quad_leftOper = popOperandos()
+        quad_leftType = popTipos()
+        quad_operator = popOperadores()
+        global operValida
+        quad_resultType = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
+        print("Intentar obtener quad de {}, {}, {}, result: {}".format(quad_leftType, quad_rightType, quad_operator, quad_resultType))
+        if quad_resultType == 'error':
+            printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
+        else:
+            #quad_result = direccion de memoria donde se guardara el tipo de dato
+            quad_resultIndex = nextAvail(quad_resultType)
+            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_resultIndex)
+            pushOperando(quad_resultIndex)
+            pushTipo(quad_resultType)
+
+'''
+Punto neuralgico para meter un operador logico a la pila de operadores
+'''
+def p_pnQuadGenExp10(p):
+    '''
+    pnQuadGenExp10 :
+    '''
+    global pOperadores
+    if p[-1] not in OPERADORES_LOGICOS:
+        print("Error: Operador no esperado.")
+    else:
+        pushOperador(p[-1])
+        print("pnQuadGenExp10 pOperadores: ", pOperadores)
+
+'''
+Punto neuralgico para checar si el top de la pila de operadores es un && o un !!
+para crear el cuadruplo de esa operacion
+'''
+def p_pnQuadGenExp11(p):
+    '''
+    pnQuadGenExp11 :
+    '''
+    if topOperador() in OPERADORES_LOGICOS:
+        quad_rightOper = popOperandos()
+        quad_rightType = popTipos()
+        quad_leftOper = popOperandos()
+        quad_leftType = popTipos()
+        quad_operator = popOperadores()
+        global operValida
+        quad_resultType = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
+        print("Intentar obtener quad de {}, {}, {}, result: {}".format(quad_leftType, quad_rightType, quad_operator, quad_resultType))
+        if quad_resultType == 'error':
+            printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
+        else:
+            #quad_result = direccion de memoria donde se guardara el tipo de dato
+            quad_resultIndex = nextAvail(quad_resultType)
+            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_resultIndex)
+            pushOperando(quad_resultIndex)
+            pushTipo(quad_resultType)
+
+'''
+Punto neuralgico para meter = a la pila de operadores
+'''
+def p_pnQuadGenSec1(p):
+    '''
+    pnQuadGenSec1 :
+    '''
+    global pOperadores
+    if p[-1] not in OPERADOR_ASIGNACION:
+        print("Error: Operador no esperado.")
+    else:
+        pushOperador(p[-1])
+        print("pnQuadGenSec1 pOperadores: ", pOperadores)
+
+'''
+Punto neuralgico para meter = a la pila de operadores
+'''
+def p_pnQuadGenSec2(p):
+    '''
+    pnQuadGenSec2 :
+    '''
+    if topOperador() in OPERADOR_ASIGNACION:
+        quad_rightOper = popOperandos() #Que le voy a asignar
+        quad_rightType = popTipos()
+        quad_leftOper = popOperandos() #A quien se lo voy a asignar
+        quad_leftType = popTipos()
+        quad_operator = popOperadores()
+        global operValida
+        global dirFunciones
+        quad_resultType = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
+        print("Intentar obtener quad de {}, {}, {}, result: {}".format(quad_leftType, quad_rightType, quad_operator, quad_resultType))
+        if dirFunciones.exist_var(currentFunction, quad_leftOper) or dirFunciones.exist_var(GLOBAL_CONTEXT, quad_leftOper):
+            if quad_resultType == 'error':
+                printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
+            else:
+                #quad_result = direccion de memoria donde se guardara el tipo de dato
+                printAuxQuad(quad_operator, quad_rightOper, '', quad_leftOper)
+        else:
+            print("Error: Intenando asignar a una no variable, de tipo: ", quad_leftType)
 
 '''
 Punto neuralgico recepcion de variable y su anadidura a su variable
@@ -723,7 +1005,7 @@ def p_pnVarSimple(p):
     varId = p[-1]
     global currentFunction
     global dirFunciones
-    print("tipo: ",p[-2])
+    print("tipo: ", p[-2])
     print("nombre: ", p[-1])
     #Agregar variable simple a directorio de funciones en current function
     dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
@@ -736,7 +1018,7 @@ lexer = lex.lex()
 '''
 Para probar el parser desde archivo
 '''
-name = ''
+name = 'test1.txt'
 
 with open(name, 'r') as archive:
     s = archive.read()

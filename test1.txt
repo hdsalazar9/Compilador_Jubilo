@@ -1,8 +1,10 @@
 program estegosaurio: 
 	
-	int a;
-	float b;
+	bool a;
+	bool b;
 
 void main(){
-	a = b * 2;
+	int c;
+	int d;
+	3 = c + c;
 }
