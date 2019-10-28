@@ -236,7 +236,19 @@ class Jubilo_CuboSemantico:
             ( 'char' , 'char' , '>=' ) : 'bool',
             ( 'char' , 'char' , '!=' ) : 'bool',
             ( 'char' , 'char' , '||' ) : 'error',
-            ( 'char' , 'char' , '&&' ) : 'error'
+            ( 'char' , 'char' , '&&' ) : 'error',
+
+            ('read', 'int', '') : 'char', 
+            ('read', 'float', '') : 'char',
+            ('read', 'bool', '') : 'char',
+            ('read', 'char', '') : 'char',
+
+            ('print', 'int', '') : 'char',
+            ('print', 'float', '') : 'char',
+            ('print', 'bool', '') : 'char',
+            ('print', 'char', '') : 'char'
+
+
         }
 
     '''

@@ -32,6 +32,7 @@ OPERADORES_MULTDIV = ['*','/']
 OPERADORES_RELACIONALES = ['>', '<', '>=', '<=', '==', '!=']
 OPERADORES_LOGICOS = ['&&', '||']
 OPERADOR_ASIGNACION = ['=']
+OPERADOR_SECUENCIAL = ['read', 'print']
 
 '''
 Variables para validacion de funciones
@@ -556,7 +557,7 @@ def p_sfunc_call(p):
 
 def p_asignacion(p):
     '''
-    asignacion : ID pnQuadGenExp1 asignacion_predicate EQUAL_OP pnQuadGenSec1 full_exp pnQuadGenSec2 SEMIC
+    asignacion : ID pnQuadGenExp1 asignacion_predicate EQUAL_OP pnQuadGenSec1 full_exp  SEMIC pnQuadGenSec2
     '''
     p[0] = "Asignacion"
 
@@ -583,7 +584,7 @@ def p_condicion_else(p):
     '''
 
 def p_escritura(p):
-    'escritura : PRINT LPAREN full_exp full_exp_loop RPAREN SEMIC'
+    'escritura : PRINT pnQuadGenSec3 LPAREN full_exp full_exp_loop RPAREN SEMIC pnQuadGenSec4'
     p[0] = "Escritura"
 
 def p_full_exp_loop(p):
@@ -594,7 +595,7 @@ def p_full_exp_loop(p):
 
 def p_lectura(p):
     '''
-    lectura : READ LPAREN ID asignacion_predicate RPAREN SEMIC
+    lectura : READ pnQuadGenSec3 LPAREN ID pnQuadGenExp1 asignacion_predicate RPAREN SEMIC pnQuadGenSec4
     '''
 
 def p_ciclo(p):
@@ -733,8 +734,11 @@ def p_empty(p):
     '''
     p[0] = None
 
+
 def p_error(p):
-    print("Syntax error at '%s'" % p)
+    print ("Syntax error in line " + str(lexer.lineno))
+    sys.exit()
+    return
 
 
 ##Puntos neuralgicos
@@ -969,7 +973,7 @@ def p_pnQuadGenSec1(p):
         print("pnQuadGenSec1 pOperadores: ", pOperadores)
 
 '''
-Punto neuralgico para meter = a la pila de operadores
+Punto neuralgico para generar el cuadruplo de asignacion
 '''
 def p_pnQuadGenSec2(p):
     '''
@@ -993,6 +997,43 @@ def p_pnQuadGenSec2(p):
                 printAuxQuad(quad_operator, quad_rightOper, '', quad_leftOper)
         else:
             print("Error: Intenando asignar a una no variable, de tipo: ", quad_leftType)
+
+
+'''
+Punto neuralgico para meter read  o print a la pila de operadores
+'''
+def p_pnQuadGenSec3(p):
+    '''
+    pnQuadGenSec3 : 
+    '''
+    global pOperadores
+    if p[-1] not in OPERADOR_SECUENCIAL:
+        print("Error: Operador no esperado.")
+    else:
+        pushOperador(p[-1])
+        print("pnQuadGenSec3 pOperadores: ", pOperadores)
+
+'''
+Punto neuralgico para generar cuadruplos de lectura y escritura
+'''
+def p_pnQuadGenSec4(p):
+    '''
+    pnQuadGenSec4 :
+    '''
+    if topOperador() in OPERADOR_SECUENCIAL:
+        quad_rightOper = popOperandos() #hace pop de read
+        quad_rightType = popTipos()
+        quad_operator = popOperadores()
+        global operValida
+        quad_resultType = operValida.get_tipo(quad_operator, quad_rightType, '')
+        #print("Intentar obtener quad de {}, {}, {}, result: {}".format(quad_leftType, quad_rightType, quad_operator, quad_resultType))
+        if quad_resultType == 'error':
+            printErrorOperacionInvalida(quad_rightOper, quad_rightType, '', '', quad_operator)
+        else:
+            printAuxQuad(quad_operator, quad_rightOper, '', quad_operator)
+            pushOperando(quad_rightOper)
+            pushTipo(quad_resultType)
+
 
 '''
 Punto neuralgico recepcion de variable y su anadidura a su variable
