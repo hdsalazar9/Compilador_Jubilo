@@ -22,6 +22,12 @@ Pilas para la generacion de cuadruplos
 pOperandos = [] # pila que almacena operandos de la expresion
 pOperadores = [] # pila que almacena operadores de la expresion
 pTipos = [] # pila que almacena los tipos de los operandos de la expresion
+pSaltos = [] #pila que almacena los indices de saltos para condiciones y ciclos
+
+'''
+Manejo de cuadruplos
+'''
+arregloCuads = [] #arreglo para guardar todos los cuadruplos generados
 
 '''
 Constantes
@@ -58,6 +64,11 @@ def popTipos():
     global pTipos
     return pTipos.pop()
 
+#Toma el ultimo elemento de Pila de Saltos
+def popSaltos():
+    global pSaltos
+    return pSaltos.pop()
+
 #Simula push stack para anadir nuevo operando
 def pushOperando(operando):
     global pOperandos
@@ -72,6 +83,11 @@ def pushOperador(operador):
 def pushTipo(tipo):
     global pTipos
     pTipos.append(tipo)
+
+#Simula push stack para anadir nuevo salto
+def pushSalto(salto):
+    global pSaltos
+    pSaltos.append(salto)
 
 #Obtiene el ultimo operando ingresado a la pila de operandos
 def topOperador():
@@ -208,9 +224,13 @@ def printErrorOutOfBounds(tipoDato):
 def printErrorOperacionInvalida(rOp, rTy, lOp, lTy, Op):
     print("Error: Imposible realizar operacion {} con operadores ({} de tipo {}) y ({} de tipo {}).".format(Op, rOp, rTy, lOp, lTy))
 
+def printTypeMismatch():
+    print('Error: Tipo de dato incorrecto')
+
 #Funcion para desplegar como quedaria
 def printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result):
     print("Quadruplo: ('{}','{}','{}','{}')".format(quad_operator, quad_leftOper, quad_rightOper, quad_result))
+
 
 #List of language tokens
 tokens = [
@@ -574,12 +594,12 @@ def p_asignacion_array_predicate(p):
     '''
 
 def p_condicion(p):
-    'condicion : IF LPAREN full_exp RPAREN bloque condicion_else SEMIC'
+    'condicion : IF LPAREN full_exp RPAREN pnQuadGenCond1 bloque condicion_else SEMIC pnQuadGenCond2'
     p[0] = "Condicion"
 
 def p_condicion_else(p):
     '''
-    condicion_else : ELSE bloque
+    condicion_else : ELSE pnQuadGenCond3 bloque
                    | empty
     '''
 
@@ -1021,7 +1041,7 @@ def p_pnQuadGenSec4(p):
     pnQuadGenSec4 :
     '''
     if topOperador() in OPERADOR_SECUENCIAL:
-        quad_rightOper = popOperandos() #hace pop de read
+        quad_rightOper = popOperandos() #hace pop de read/write
         quad_rightType = popTipos()
         quad_operator = popOperadores()
         global operValida
@@ -1033,6 +1053,34 @@ def p_pnQuadGenSec4(p):
             printAuxQuad(quad_operator, quad_rightOper, '', quad_operator)
             pushOperando(quad_rightOper)
             pushTipo(quad_resultType)
+
+def p_pnQuadGenCond1(p):
+    '''
+    pnQuadGenCond1 :
+    '''
+    global arregloCuads
+    quad_resultType = popTipos()
+    if quad_resultType == 'error':
+        printTypeMismatch()
+    else:
+        result = pOperandos()
+        printAuxQuad('GOTOF', result, '', '')
+        pushSalto(len(arregloCuads) - 1)
+
+def p_pnQuadGenCond2(p):
+    '''
+    pnQuadGenCond2 :
+    '''
+    global arregloCuads
+    end = popSaltos()
+
+def p_pnQuadGenCond3(p):
+    '''
+    pnQuadGenCond3 :
+    '''
+    global arregloCuads
+    printAuxQuad('GOTO', '', '','')
+
 
 
 '''
