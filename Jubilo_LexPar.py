@@ -27,7 +27,7 @@ pSaltos = [] #pila que almacena los indices de saltos para condiciones y ciclos
 '''
 Manejo de cuadruplos
 '''
-arregloCuads = [] #arreglo para guardar todos los cuadruplos generados
+arregloQuads = [] #arreglo para guardar todos los cuadruplos generados
 
 '''
 Constantes
@@ -70,6 +70,11 @@ def popSaltos():
     global pSaltos
     return pSaltos.pop()
 
+#Simula pop stack para remover el ultimo quadruplo
+def popQuad(quad):
+    global arregloQuads
+    return arregloQuads.pop()
+
 #Simula push stack para anadir nuevo operando
 def pushOperando(operando):
     global pOperandos
@@ -90,6 +95,11 @@ def pushSalto(salto):
     global pSaltos
     pSaltos.append(salto)
 
+#Simula push stack para anadir nuevo quadruplo
+def pushQuad(quad):
+    global arregloQuads
+    arregloQuads.append(quad)
+
 #Obtiene el ultimo operando ingresado a la pila de operandos
 def topOperador():
     global pOperadores
@@ -105,6 +115,11 @@ def topTipo():
     if(last < 0):
         return 'empty'
     return pTipos[last]
+
+#Obtiene el indice del siguiente cuadruplo del arreglo de cuadruplos
+def nextQuad():
+    global arregloQuads
+    return len(arregloQuads)
 
 '''
 Manejo de memoria para funcion funcion nextAvail: toma el siguiente temporal en
@@ -219,6 +234,7 @@ Funciones para desplegar mensajes genericos como errores o infos
 #Funcion para mostrar un mensaje de error cuando se llena los maximos posibles valores temporales
 def printErrorOutOfBounds(tipoDato):
     print("Error: Memoria llena; demasiadas temporales de tipo {}.".format(tipoDato))
+    sys.exit()
 
 #Funcion para mostrar un mensaje de error generico entre un operador
 #y dos operandos junto con su tipo
@@ -230,8 +246,17 @@ def printTypeMismatch():
 
 #Funcion para desplegar como quedaria
 def printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result):
+    auxQuad = (quad_operator, quad_leftOper, quad_rightOper, quad_result)
+    pushQuad(auxQuad)
     print(">>> Quadruplo: ('{}','{}','{}','{}')".format(quad_operator, quad_leftOper, quad_rightOper, quad_result))
 
+#Funcino para desplegar los cuadruplos de manera bonita y con index
+def printQuadsInFormat():
+    print("##### Cuadruplos al momento: #####")
+    count = 0
+    for quad in arregloQuads:
+        print("{}.\t{},\t{},\t{},\t{}".format(count,quad[0],quad[1],quad[2],quad[3]))
+        count = count + 1
 
 #List of language tokens
 tokens = [
@@ -412,6 +437,7 @@ def p_programa(p):
     programa : PROGRAM ID COLON vars vars_loop function main
     '''
     print("Programa \"", p[2], "\" terminado.")
+    printQuadsInFormat()
 
 #Declaracion de variables, puede ser recursivo y declarar varias variables
 def p_vars(p):
@@ -628,7 +654,7 @@ def p_lectura(p):
 
 def p_ciclo(p):
     '''
-    ciclo : WHILE LPAREN full_exp RPAREN bloque SEMIC
+    ciclo : WHILE pnQuadGenCycle1 LPAREN full_exp RPAREN pnQuadGenCycle2 bloque SEMIC pnQuadGenCycle3
     '''
 
 def p_full_exp(p):
@@ -802,6 +828,7 @@ def p_pnQuadGenExp1(p):
     #Si tampoco se encuentra en el contexto global, no existe la variable
     if not varTipo:
         print("Error: Variable ", varId , " no declarada.")
+        sys.exit("Error: Variable {} no declarada.".format(varId))
         #TODO: Deberiamos handlear el hecho de que no este declarada y no tronar el sistema
         return
     pushOperando(varId)
@@ -1062,35 +1089,86 @@ def p_pnQuadGenSec4(p):
             printAuxQuad(quad_operator, quad_rightOper, '', quad_operator)
             pushOperando(quad_rightOper)
             pushTipo(quad_resultType)
-
+'''
+Genera el cuadruplo GOTOF para la condicion IF despues de recibir la expresion boleana a evaluar
+'''
 def p_pnQuadGenCond1(p):
     '''
     pnQuadGenCond1 :
     '''
-    global arregloCuads
     quad_resultType = popTipos()
     if quad_resultType == 'error':
         printTypeMismatch()
     else:
-        result = pOperandos()
+        result = popOperandos()
         printAuxQuad('GOTOF', result, '', '')
-        pushSalto(len(arregloCuads) - 1)
+        pushSalto(nextQuad() - 1)
 
+'''
+Rellena el cuadruplo para que el programa sepa cuando terminar la condicion
+'''
 def p_pnQuadGenCond2(p):
     '''
     pnQuadGenCond2 :
     '''
-    global arregloCuads
+    global arregloQuads
     end = popSaltos()
+    auxQuad = (arregloQuads[end][0], arregloQuads[end][1], arregloQuads[end][2], nextQuad())
+    arregloQuads[end] = auxQuad
 
+'''
+Genera el cuadruplo GOTO para la condicion ELSE y rellena el cuadruplo
+para que el programa sepa a donde saltar en caso de obtener falso
+'''
 def p_pnQuadGenCond3(p):
     '''
     pnQuadGenCond3 :
     '''
-    global arregloCuads
+    global arregloQuads
     printAuxQuad('GOTO', '', '','')
+    false = popSaltos()
+    pushSalto(nextQuad() - 1)
+    auxQuad = (arregloQuads[false][0], arregloQuads[false][1], arregloQuads[false][2], nextQuad())
+    arregloQuads[false] = auxQuad
+'''
+Mete el siguiente cuadruplo a la pila de saltos, a donde regresara
+al final del ciclo
+'''
+def p_pnQuadGenCycle1(p):
+    '''
+    pnQuadGenCycle1 :
+    '''
+    pushSalto(nextQuad())
 
-
+'''
+Genera el cuadruplo GOTOF para que el programa sepa a donde debe ir
+si la evaluacion de la expresion resulta falsa
+'''
+def p_pnQuadGenCycle2(p):
+    '''
+    pnQuadGenCycle2 :
+    '''
+    quad_resultType = popTipos()
+    if quad_resultType == 'error':
+        printTypeMismatch()
+    else:
+        result = popOperandos()
+        printAuxQuad('GOTOF', result, '', '')
+        pushSalto(nextQuad()-1)
+'''
+Genera el cuadruplo GOTO para que el programa sepa a donde regresar una vez
+terminado el statement. Rellena los GOTOs generados en pnQuadGenCycle2 y
+pnQuadGenCycle3.
+'''
+def p_pnQuadGenCycle3(p):
+    '''
+    pnQuadGenCycle3 :
+    '''
+    end = popSaltos()
+    retorno = popSaltos()
+    printAuxQuad('GOTO', retorno, '','')
+    auxQuad = (arregloQuads[end][0], arregloQuads[end][1], arregloQuads[end][2], nextQuad())
+    arregloQuads[end] = auxQuad
 
 '''
 Punto neuralgico recepcion de variable y su anadidura a su variable
