@@ -1,0 +1,11 @@
+program estegosaurio: 
+	
+	int a;
+	float b;
+
+void main(){
+	float c;
+	c = 4 + 5;
+	print(-3 --6.6);
+	read(b);
+}

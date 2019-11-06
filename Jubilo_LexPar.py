@@ -44,6 +44,7 @@ OPERADOR_SECUENCIAL = ['read', 'print']
 Variables para validacion de funciones
 '''
 currentFunction = GLOBAL_CONTEXT # string nombre de funcion actual
+negativeConstant = False
 
 
 '''
@@ -229,7 +230,7 @@ def printTypeMismatch():
 
 #Funcion para desplegar como quedaria
 def printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result):
-    print("Quadruplo: ('{}','{}','{}','{}')".format(quad_operator, quad_leftOper, quad_rightOper, quad_result))
+    print(">>> Quadruplo: ('{}','{}','{}','{}')".format(quad_operator, quad_leftOper, quad_rightOper, quad_result))
 
 
 #List of language tokens
@@ -248,7 +249,8 @@ tokens = [
     'READCSV','EXPORTCSV', 'PLOTHIST','PLOTLINE', #funciones especiales
     'EXCHANGE','LINEAREG', 'RANDINT','RANDFLOAT', #funciones especiales
     'RANDINTMAT','RANDFLOATMAT', #funciones especiales
-    'FLOAT_CTE','INT_CTE','BOOL_CTE','CHAR_CTE','STRING_CTE' #constantes
+    'FLOAT_CTE','INT_CTE','BOOL_CTE','CHAR_CTE','STRING_CTE', #constantes
+    'NEW_LINE'
 ]
 
 #Defining token Reg Expressions
@@ -299,6 +301,11 @@ def t_CHAR_CTE(t):
 
 def t_COMMENT(t):
     r'\~.*'
+    return t
+
+def t_NEW_LINE(t):
+    r'\n'
+    t.lexer.lineno += 1
     return t
 
 #Recognizing string literals
@@ -529,18 +536,19 @@ def p_type(p):
 
 def p_constante(p):
     '''
-    constante : BOOL_CTE
-              | STRING_CTE
-              | CHAR_CTE
-              | MINUS_OP constante_num
+    constante : BOOL_CTE pnQuadGenCteBool
+              | STRING_CTE pnQuadGenCteString
+              | CHAR_CTE pnQuadGenCteChar
+              | MINUS_OP pnNegConst constante_num
               | constante_num
     '''
 
 def p_constante_num(p):
     '''
-    constante_num : INT_CTE
-                  | FLOAT_CTE
+    constante_num : INT_CTE pnQuadGenCteInt
+                  | FLOAT_CTE pnQuadGenCteFloat
     '''
+    p[0] = p[1]
 
 def p_main(p):
     '''
@@ -655,14 +663,14 @@ def p_expresion_operador(p):
 
 def p_exp(p):
     '''
-    exp : termino  pnQuadGenExp4 exp_predicate
+    exp : termino pnQuadGenExp4 exp_predicate
     '''
 
 def p_exp_predicate(p):
     '''
     exp_predicate : PLUS_OP pnQuadGenExp2 exp
                   | MINUS_OP pnQuadGenExp2 exp
-                  | empty
+                  | empty pnQuadGenExp4
     '''
 
 def p_termino(p):
@@ -794,6 +802,7 @@ def p_pnQuadGenExp1(p):
     #Si tampoco se encuentra en el contexto global, no existe la variable
     if not varTipo:
         print("Error: Variable ", varId , " no declarada.")
+        #TODO: Deberiamos handlear el hecho de que no este declarada y no tronar el sistema
         return
     pushOperando(varId)
     pushTipo(varTipo)
@@ -1020,11 +1029,11 @@ def p_pnQuadGenSec2(p):
 
 
 '''
-Punto neuralgico para meter read  o print a la pila de operadores
+Punto neuralgico para meter read o print a la pila de operadores
 '''
 def p_pnQuadGenSec3(p):
     '''
-    pnQuadGenSec3 : 
+    pnQuadGenSec3 :
     '''
     global pOperadores
     if p[-1] not in OPERADOR_SECUENCIAL:
@@ -1099,6 +1108,60 @@ def p_pnVarSimple(p):
     #Agregar variable simple a directorio de funciones en current function
     dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
 
+'''
+Puntos neuralgicos para recepcion de constantes y meter su valor en pila de operandos
+'''
+def p_pnQuadGenCteBool(p):
+    '''
+    pnQuadGenCteBool :
+    '''
+    pushOperando(p[-1])
+    pushTipo('bool')
+
+def p_pnQuadGenCteString(p):
+    '''
+    pnQuadGenCteString :
+    '''
+    pushOperando(p[-1])
+    pushTipo('string')
+
+def p_pnQuadGenCteChar(p):
+    '''
+    pnQuadGenCteChar :
+    '''
+    pushOperando(p[-1])
+    pushTipo('char')
+
+'''
+Punto neuralgico si es que se trata de una constante negativa
+'''
+def p_pnNegConst(p):
+    '''
+    pnNegConst :
+    '''
+    global negativeConstant
+    negativeConstant = True
+
+def p_pnQuadGenCteInt(p):
+    '''
+    pnQuadGenCteInt :
+    '''
+    if negativeConstant:
+        pushOperando(-1 * p[-1])
+    else:
+        pushOperando(p[-1])
+    pushTipo('int')
+
+def p_pnQuadGenCteFloat(p):
+    '''
+    pnQuadGenCteFloat :
+    '''
+    if negativeConstant:
+        pushOperando(-1.0 * p[-1])
+    else:
+        pushOperando(p[-1])
+    pushTipo('float')
+
 
 #Defining Lexer & Parser
 parser = yacc.yacc()
@@ -1107,7 +1170,7 @@ lexer = lex.lex()
 '''
 Para probar el parser desde archivo
 '''
-name = 'test1.txt'
+name = './test_files/test1.txt'
 
 with open(name, 'r') as archive:
     s = archive.read()
