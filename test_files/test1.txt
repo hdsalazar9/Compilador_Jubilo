@@ -1,5 +1,5 @@
-program estegosaurio: 
-	
+program estegosaurio:
+
 	int a;
 	float b;
 

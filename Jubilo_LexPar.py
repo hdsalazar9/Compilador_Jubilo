@@ -30,6 +30,14 @@ Manejo de cuadruplos
 arregloQuads = [] #arreglo para guardar todos los cuadruplos generados
 
 '''
+Diccionario de constantes:
+Enteras, Flotantes, String
+'''
+dict_Int = {}
+dict_Float = {}
+dict_String = {}
+
+'''
 Constantes
 '''
 GLOBAL_CONTEXT = 'globals'
@@ -122,7 +130,7 @@ def nextQuad():
     return len(arregloQuads)
 
 '''
-Manejo de memoria para funcion funcion nextAvail: toma el siguiente temporal en
+Manejo de memoria para la funcion nextAvail: toma el siguiente temporal en
 la pila para la generacion de cuadruplos
 '''
 
@@ -162,33 +170,30 @@ Espacios de memoria:
 +constantes booleanas + batch_size
 +---------------------+
 +constantes character + batch_size
++---------------------+
++constantes string    + batch_size
 +++++++++++++++++++++++
 '''
 #Declaracion de inicio de espacio de memoria por tipo de memoria
 index_intGlobales = BATCH_SIZE
 index_floatGlobales = index_intGlobales + BATCH_SIZE
 index_boolGlobales = index_floatGlobales + BATCH_SIZE
-index_charGlobales = index_boolGlobales + BATCH_SIZE
-index_intLocales = index_charGlobales + BATCH_SIZE
+index_intLocales = index_boolGlobales + BATCH_SIZE
 index_floatLocales = index_intLocales + BATCH_SIZE
 index_boolLocales = index_floatLocales + BATCH_SIZE
-index_charLocales = index_boolLocales + BATCH_SIZE
-index_intTemporales = index_charLocales + BATCH_SIZE
+index_intTemporales = index_boolLocales + BATCH_SIZE
 index_floatTemporales = index_intTemporales + BATCH_SIZE
 index_boolTemporales = index_floatTemporales + BATCH_SIZE
-index_charTemporales = index_boolTemporales + BATCH_SIZE
-index_intConstantes = index_charTemporales + BATCH_SIZE
+index_intConstantes = index_boolTemporales + BATCH_SIZE
 index_floatConstantes = index_intConstantes + BATCH_SIZE
-index_boolConstantes = index_floatConstantes + BATCH_SIZE
-index_charConstantes = index_boolConstantes + BATCH_SIZE
+index_stringConstantes = index_floatConstantes + BATCH_SIZE
 
 #Declaracion de inicio de index de memoria para temporales
-cont_IntTemp = index_charLocales
+cont_IntTemp = index_boolLocales
 cont_FloatTemp = index_intTemporales
 cont_BoolTemp = index_floatTemporales
-cont_CharTemp = index_boolTemporales
 
-#Obtiene el siguiente temporal de la pila simualda de temporales
+#Obtiene el siguiente temporal de la pila simulada de temporales
 def nextAvail(tipo):
     global cont_IntTemp
     global cont_FloatTemp
@@ -200,40 +205,90 @@ def nextAvail(tipo):
             avail = cont_IntTemp
             cont_IntTemp = cont_IntTemp + 1
         else:
-            printErrorOutOfBounds('Enteras')
+            printErrorOutOfBounds('temporales','Enteras')
 
     elif tipo == 'float':
         if cont_FloatTemp < index_floatTemporales:
             avail = cont_FloatTemp
             cont_FloatTemp = cont_FloatTemp + 1
         else:
-            printErrorOutOfBounds('Flotantes')
+            printErrorOutOfBounds('temporales','Flotantes')
 
     elif tipo == 'bool':
         if cont_BoolTemp < index_boolTemporales:
             avail = cont_BoolTemp
             cont_BoolTemp = cont_BoolTemp + 1
         else:
-           printErrorOutOfBounds('Boleanas')
-
-    elif tipo == 'char':
-        if cont_CharTemp < index_charTemporales:
-            avail = cont_CharTemp
-            cont_CharTemp = cont_CharTemp + 1
-        else:
-            printErrorOutOfBounds('Caracter')
+           printErrorOutOfBounds('temporales','Boleanas')
     else:
         avail = -1
         #En teoria nunca deberia llegar aqui D:!
         print("Error: Tipo de variable desconocida.")
     return avail
 
+#Declaracion de inicio de index de memoria para constantes
+cont_IntConst = index_boolTemporales
+cont_FloatConst = index_intConstantes
+cont_StringConst = index_floatConstantes
+
+#Checa si la constante se encuentra en el diccionario de constantes y si no, lo guarda
+#Y lo agrega a la pila de operandos
+#Se crea un cuadruplo de tipo:
+# addConstant, Tipo de constante, Constante, direccion de memoria (aka el valor del diccionario)
+def pushConstant(constante):
+    global dict_Int
+    global dict_Float
+    global dict_String
+    global cont_IntConst
+    global cont_FloatConst
+    global cont_StringConst
+
+    if type(constante) == int:
+        if constante not in dict_Int:
+            if cont_IntConst < index_intConstantes:
+                dict_Int[constante] = cont_IntConst
+                cont_IntConst = cont_IntConst + 1
+                printAuxQuad('addConstant', 'int', constante, dict_Int[constante])
+            else:
+                printErrorOutOfBounds('constantes','Enteras')
+        pushOperando(dict_Int[constante])
+        pushTipo('int')
+
+    elif type(constante) == float:
+        if constante not in dict_Float:
+            if cont_FloatConst < index_floatConstantes:
+                dict_Float[constante] = cont_FloatConst
+                cont_FloatConst = cont_FloatConst + 1
+                printAuxQuad('addConstant', 'float', constante, dict_Float[constante])
+            else:
+                printErrorOutOfBounds('constantes','Flotantes')
+        pushOperando(dict_Float[constante])
+        pushTipo('float')
+
+    elif type(constante) == str:
+        if constante == 'true' or constante == 'false':
+            pushOperando(constante)
+            pushTipo('bool')
+        else:
+            if constante not in dict_String:
+                if cont_StringConst < index_stringConstantes:
+                    dict_String[constante] = cont_StringConst
+                    cont_StringConst = cont_StringConst + 1
+                    printAuxQuad('addConstant', 'string', constante, dict_String[constante])
+                else:
+                    printErrorOutOfBounds('constantes','Strings')
+            pushOperando(dict_String[constante])
+            pushTipo('string')
+
+    else:
+        sys.exit("Error: Tipo de variable desconocida.");
+
 '''
 Funciones para desplegar mensajes genericos como errores o infos
 '''
 #Funcion para mostrar un mensaje de error cuando se llena los maximos posibles valores temporales
-def printErrorOutOfBounds(tipoDato):
-    print("Error: Memoria llena; demasiadas temporales de tipo {}.".format(tipoDato))
+def printErrorOutOfBounds(tipoMemoria,tipoDato):
+    print("Error: Memoria llena; demasiadas {} de tipo {}.".format(tipoMemoria,tipoDato))
     sys.exit()
 
 #Funcion para mostrar un mensaje de error generico entre un operador
@@ -315,12 +370,12 @@ def t_INT_CTE(t):
     return t
 
 def t_STRING_CTE(t):
-    r'\"[a-z][a-zA-Z0-9_]*\"'
+    r'\"[a-zA-Z0-9_]*\"'
     t.value = str(t.value)
     return t
 
 def t_CHAR_CTE(t):
-    r'\'[a-z][a-zA-Z0-9_]\''
+    r'\'[a-zA-Z0-9_]\''
     t.value = chr(t.value)
     return t
 
@@ -364,9 +419,9 @@ def t_ID(t):
         t.type = 'CHAR_TYPE'
     elif t.value == 'string':
         t.type = 'STRING_TYPE'
-    elif t.value == 'true' or t.value == 'TRUE':
+    elif t.value == 'true':
         t.type = 'BOOL_CTE'
-    elif t.value == 'false' or t.value == 'FALSE':
+    elif t.value == 'false':
         t.type = 'BOOL_CTE'
     elif t.value == 'arrange':
         t.type = 'ARRANGE'
@@ -1193,22 +1248,19 @@ def p_pnQuadGenCteBool(p):
     '''
     pnQuadGenCteBool :
     '''
-    pushOperando(p[-1])
-    pushTipo('bool')
+    pushConstant(p[-1])
 
 def p_pnQuadGenCteString(p):
     '''
     pnQuadGenCteString :
     '''
-    pushOperando(p[-1])
-    pushTipo('string')
+    pushConstant(p[-1])
 
 def p_pnQuadGenCteChar(p):
     '''
     pnQuadGenCteChar :
     '''
-    pushOperando(p[-1])
-    pushTipo('char')
+    pushConstant(p[-1])
 
 '''
 Punto neuralgico si es que se trata de una constante negativa
@@ -1225,21 +1277,18 @@ def p_pnQuadGenCteInt(p):
     pnQuadGenCteInt :
     '''
     if negativeConstant:
-        pushOperando(-1 * p[-1])
+        pushConstant(-1 * p[-1])
     else:
-        pushOperando(p[-1])
-    pushTipo('int')
+        pushConstant(p[-1])
 
 def p_pnQuadGenCteFloat(p):
     '''
     pnQuadGenCteFloat :
     '''
     if negativeConstant:
-        pushOperando(-1.0 * p[-1])
+        pushConstant(-1.0 * p[-1])
     else:
-        pushOperando(p[-1])
-    pushTipo('float')
-
+        pushConstant(p[-1])
 
 #Defining Lexer & Parser
 parser = yacc.yacc()
