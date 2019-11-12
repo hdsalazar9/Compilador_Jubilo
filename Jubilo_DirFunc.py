@@ -16,9 +16,10 @@ class Jubilo_DirFunc:
         tipo : tipo de la funcion que se va a guardar
         cantParametros : Cantidad de parametros para la funcion definida
         variables : objeto de tipo Jubilo_TablaVars para guardar las variables
+        quadCont : Contador actual de cuadruplos
         '''
         #inicializa el diccionario de funciones con globals, funcion auxiliar para las variables globales
-        self.diccionario = {'globals': {'nombre' : 'globals', 'tipo' : 'void', 'cantParametros' : 0, 'variables' : Jubilo_TablaVars()}}
+        self.diccionario = {'globals': {'nombre' : 'globals', 'tipo' : 'void', 'cantParametros' : 0, 'variables' : Jubilo_TablaVars(), 'quadCont' : 0}}
         print("Funcion creada: globals de tipo void")
 
     '''
@@ -29,10 +30,20 @@ class Jubilo_DirFunc:
         return nombre in self.diccionario.keys()
 
     '''
+    Funcion que busca y regresa una funcion y sus datos, del diccionaro.
+    ~ TODO:
+    '''
+    def search_function(self, nombre):
+        if self.exist_function(nombre):
+            return self.diccionario[nombre]
+        else:
+            return None
+
+    '''
     Funcion para agregar una nueva funcion al Diccionario
     ~TODO:
     '''
-    def add_function(self, nombre, tipo, cantParametros):
+    def add_function(self, nombre, tipo, cantParametros, quadCont):
         #Revisar que no se haya definido ya una funcion con el mismo nombre
         if self.exist_function(nombre):
             print("Error: Funcion ", str(nombre), " ya definida.\n")
@@ -43,19 +54,21 @@ class Jubilo_DirFunc:
                 'nombre' : nombre,
                 'tipo': tipo,
                 'cantParametros' : cantParametros,
-                'variables' : Jubilo_TablaVars()
+                'variables' : Jubilo_TablaVars(),
+                'quadCont' : quadCont
             }
-            print("Funcion creada: ", nombre, " de tipo: ", tipo)
+            print("Funcion creada: ", nombre, " de tipo: ", tipo, " con cantParametros: ", cantParametros)
 
     '''
-    Funcion que busca y regresa una funcion y sus datos, del diccionaro.
-    ~ TODO:
+    Funcion para actualizar el numero de parametros de una funcion previamente creada
     '''
-    def search_function(self, nombre):
+    def update_functionParams(self, nombre, cantParametros):
+        #Si ya existe la funcion actualizar su cantidad  de parametros directamente
         if self.exist_function(nombre):
-            return self.diccionario[nombre]
+            self.diccionario[nombre]['cantParametros'] = cantParametros
+        #Si no existe desplegar error
         else:
-            return None
+            print("Error: Imposible actualizar parametros de una funcion no existente: ", nombre)
 
     '''
     Funcion que intenta agregar una variable a la funcion nombre

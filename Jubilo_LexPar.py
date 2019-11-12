@@ -52,8 +52,10 @@ OPERADOR_SECUENCIAL = ['read', 'print']
 Variables para validacion de funciones
 '''
 currentFunction = GLOBAL_CONTEXT # string nombre de funcion actual
+currentFunctionType = "void";
 negativeConstant = False
-
+currentContParameters = 0 #Cantidad de parametros para la funcion actualmente siendo compilada
+currentContVars = 0 #Cantidad de variables para la funcion actualmente siendo compilada
 
 '''
 Funciones para simular y manejar pilas (push, pop, top)
@@ -482,10 +484,9 @@ def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
-
-
-#Grammar Rules por Parser
-
+'''
+###Grammar Rules por Parser###
+'''
 #Declaracion de id programa inicial
 def p_programa(p):
     '''
@@ -512,7 +513,7 @@ def p_vars_loop(p):
 def p_vars_predicate(p):
     '''
     vars_predicate : pnVarSimple SEMIC
-                   | vars_assign SEMIC
+                   | vars_assign pnVarAssign SEMIC
                    | vars_array SEMIC
     '''
 
@@ -585,7 +586,14 @@ def p_array_loop(p):
 def p_function(p):
     '''
     function : empty
-             | FUNC type ID LPAREN function_predicate RPAREN vars bloque function
+             | FUNC function_auxTypeId LPAREN function_predicate RPAREN pnFuncGen3 bloque function
+    '''
+    #TODO: borre "vars" antes de "bloque" probablemente no debi haberlo hecho
+
+def p_function_auxTypeId(p):
+    '''
+    function_auxTypeId : VOID ID pnFuncGen1
+                       | type ID pnFuncGen1
     '''
 
 def p_function_predicate(p):
@@ -596,7 +604,7 @@ def p_function_predicate(p):
 
 def p_func_params(p):
     '''
-    func_params : type ID func_params_loop
+    func_params : type ID pnFuncGen2 func_params_loop
     '''
 
 def p_func_params_loop(p):
@@ -613,6 +621,7 @@ def p_type(p):
          | CHAR_TYPE
          | STRING_TYPE
     '''
+    #TODO: Probablemente el VOID no deberia estar ahi...
     p[0] = p[1]
 
 def p_constante(p):
@@ -861,8 +870,12 @@ def p_pnCreateFunctionMain(p):
     '''
     global dirFunciones
     global currentFunction
+    global currentContVars
+    global currentContParameters
     currentFunction = 'main'
-    dirFunciones.add_function(currentFunction, 'void', 0)
+    dirFunciones.add_function(currentFunction, 'void', 0, nextQuad())
+    currentContParameters = 0 #Se reinician los contadores de parametros y variables para la funcion
+    currentContVars = 0
 
 '''
 Punto neuralgico de anadir id a pOper y pType
@@ -1236,10 +1249,21 @@ def p_pnVarSimple(p):
     varId = p[-1]
     global currentFunction
     global dirFunciones
+    global currentContVars
     print("tipo: ", p[-2])
     print("nombre: ", p[-1])
     #Agregar variable simple a directorio de funciones en current function
     dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
+    currentContVars = currentContVars + 1 #Se lleva una variable
+
+'''
+Punto neuralgico para crear una variable con su respectiva asignacion de valor
+'''
+def p_pnVarAssign(p):
+    '''
+    pnVarAssign :
+    '''
+
 
 '''
 Puntos neuralgicos para recepcion de constantes y meter su valor en pila de operandos
@@ -1289,6 +1313,46 @@ def p_pnQuadGenCteFloat(p):
         pushConstant(-1.0 * p[-1])
     else:
         pushConstant(p[-1])
+
+'''
+Puntos neuralgicos para la creacion de funciones y sus respectivas inicializaciones
+'''
+#Inicializacion de variables para conteo de parametros y variables de la nueva funcion
+def p_pnFuncGen1(p):
+    '''
+    pnFuncGen1 :
+    '''
+    global currentFunction
+    global currentFunctionType
+    global currentContVars
+    global currentContParameters
+    currentContParameters = 0 #Se reinician los contadores de parametros y variables para la funcion
+    currentContVars = 0
+    currentFunction = p[-1] #Current function = id de la funcion que se quiere crear
+    currentFunctionType = str(p[-2])
+    dirFunciones.add_function(currentFunction, currentFunctionType, currentContParameters, nextQuad())
+
+#Funcion para contabilizar los parametros
+def p_pnFuncGen2(p):
+    '''
+    pnFuncGen2 :
+    '''
+    global currentFunction
+    global currentContParameters
+    currentContParameters += 1
+    #Agregar cada parametro como variable dentro de la tabla de variables de la funcion
+    #Se agrega en el contexto local, con el tipo y id definidos, y siendo no dimensionada
+    dirFunciones.add_varToFunction(currentFunction, p[-1], p[-2], 0, 0)
+
+#Funcion para actualizar el numero de parametros de una funcion ya definida
+def p_pnFuncGen3(p):
+    '''
+    pnFuncGen3 :
+    '''
+    global dirFunciones
+    global currentFunction
+    global currentContParameters
+    dirFunciones.update_functionParams(currentFunction, currentContParameters)
 
 #Defining Lexer & Parser
 parser = yacc.yacc()
