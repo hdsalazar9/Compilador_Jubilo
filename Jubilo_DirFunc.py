@@ -66,9 +66,12 @@ class Jubilo_DirFunc:
         #Si ya existe la funcion actualizar su cantidad  de parametros directamente
         if self.exist_function(nombre):
             self.diccionario[nombre]['cantParametros'] = cantParametros
+
         #Si no existe desplegar error
         else:
             print("Error: Imposible actualizar parametros de una funcion no existente: ", nombre)
+
+        print("Funcion creada: ", nombre, " de tipo: ", self.diccionario[nombre]['tipo'], " con cantParametros: ", cantParametros)
 
     '''
     Funcion que intenta agregar una variable a la funcion nombre
@@ -96,6 +99,12 @@ class Jubilo_DirFunc:
         else:
             print("Warning: Variable: ", nombreVar ," no existe en este contexto: ", nombre)
             return None
+
+    '''
+    Pone en forma de lista los tipos encontrados en Jubilo_TablaVars
+    '''
+    def listTypes(self, function):
+        return [ self.diccionario[function]['variables'].diccionario[x] ['tipo'] for x in self.diccionario[function]['variables'].diccionario]
 
     '''
     Funcion que regresa si existe una variable en la tabla de variables de la funcion dada

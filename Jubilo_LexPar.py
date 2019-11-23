@@ -13,6 +13,7 @@ from Jubilo_DirFunc import *
 Objetos para la generacion de cuadruplos
 '''
 dirFunciones = Jubilo_DirFunc() #Toma el objeto de clase DirFunc para validar la existecia de funciones
+dirVars = Jubilo_TablaVars()
 operValida = Jubilo_CuboSemantico() # Toma el objeto de clase CuboSemantico para validar operaciones
 funcValida = Jubilo_CuboSemantico_SFuncs() #Toma el objeto de clase CuboSemanticoSFuncs para validar funciones
 
@@ -22,7 +23,9 @@ Pilas para la generacion de cuadruplos
 pOperandos = [] # pila que almacena operandos de la expresion
 pOperadores = [] # pila que almacena operadores de la expresion
 pTipos = [] # pila que almacena los tipos de los operandos de la expresion
-pSaltos = [] #pila que almacena los indices de saltos para condiciones y ciclos
+pSaltos = [] # pila que almacena los indices de saltos para condiciones y ciclos
+pFunciones = [] # pila que almacena los indices de ubicacion de las funciones del programa
+pArgumentos = [] # pila que almacena cantidad de argumentos de una funcion
 
 '''
 Manejo de cuadruplos
@@ -36,6 +39,7 @@ Enteras, Flotantes, String
 dict_Int = {}
 dict_Float = {}
 dict_String = {}
+
 
 '''
 Constantes
@@ -56,6 +60,7 @@ currentFunctionType = "void";
 negativeConstant = False
 currentContParameters = 0 #Cantidad de parametros para la funcion actualmente siendo compilada
 currentContVars = 0 #Cantidad de variables para la funcion actualmente siendo compilada
+retornoFlag = False #bandera para detectar cuando una funcion debe o no tener valor de retorno
 
 '''
 Funciones para simular y manejar pilas (push, pop, top)
@@ -195,6 +200,49 @@ cont_IntTemp = index_boolLocales
 cont_FloatTemp = index_intTemporales
 cont_BoolTemp = index_floatTemporales
 
+'''
+Variables para manejar cambios de contexto
+'''
+memoriaGlobal = [0, index_intGlobales, index_floatGlobales, index_boolGlobales] #valores actuales para cada tipo de dato global
+
+memoriaLocal = [0, index_intLocales, index_floatLocales, index_boolLocales] #valores actuales para cada tipo de dato local
+
+'''
+Modificador de memoria para el manejo de arreglos
+updateMemoryPointer(scope de la declaracion del arreglo, tipo del arreglo, cantidad de valores en el arreglo)
+'''
+def updateMemoryPointer(scope, tipo, cont):
+    global memoriaGlobal
+    global memoriaLocal
+
+    if scope == 'globals':
+        if tipo == 'int':
+            memoriaGlobal[0] += cont
+            if memoriaGlobal[0] > index_intGlobales:
+                print ('Overflow int globales')
+        if tipo == 'float':
+            memoriaGlobal[1] += cont
+            if memoriaGlobal[1] > index_floatGlobales:
+                print('Overflow float globales')
+        if tipo == 'bool':
+            memoriaGlobal[2] += cont
+            if memoriaGlobal[2] > index_boolGlobales:
+                print('Overflow bool globales')
+    else:
+        if tipo == 'int':
+            memoriaLocal[0] += cont
+            if memoriaLocal[0] > index_intLocales:
+                print('Overflow int locales')
+        if tipo == 'float':
+            memoriaLocal[1] += cont
+            if memoriaLocal[1] > index_floatLocales:
+                print('Overflow float locales')
+        if tipo == 'bool':
+            memoriaLocal[2] += cont
+            if memoriaLocal[2] > index_boolLocales:
+                print('Overflow bool locales')
+
+
 #Obtiene el siguiente temporal de la pila simulada de temporales
 def nextAvail(tipo):
     global cont_IntTemp
@@ -300,6 +348,10 @@ def printErrorOperacionInvalida(rOp, rTy, lOp, lTy, Op):
 
 def printTypeMismatch():
     print('Error: Tipo de dato incorrecto')
+
+#Regresa un mensaje de error en caso de que el retorno de una funcion sea incorrecto
+def printReturnError():
+    print('Error: La funcion intenta retornar un valor que no coincide con su tipo')
 
 #Funcion para desplegar como quedaria
 def printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result):
@@ -490,7 +542,7 @@ def t_error(t):
 #Declaracion de id programa inicial
 def p_programa(p):
     '''
-    programa : PROGRAM ID COLON vars vars_loop function main
+    programa : PROGRAM ID COLON vars vars_loop pnGotoMain function main
     '''
     print("Programa \"", p[2], "\" terminado.")
     printQuadsInFormat()
@@ -500,6 +552,8 @@ def p_vars(p):
     '''
     vars : type ID vars_predicate
     '''
+
+    # le puse pnTipoIdVar despues de ID
     #print("Variable", "de tipo ", " creada.")
 
 #Permite que en el inicio de un programa pueda crear varias variables globales
@@ -513,14 +567,14 @@ def p_vars_loop(p):
 def p_vars_predicate(p):
     '''
     vars_predicate : pnVarSimple SEMIC
-                   | vars_assign pnVarAssign SEMIC
+                   | vars_assign SEMIC
                    | vars_array SEMIC
     '''
 
 #Asignacion de constante a una variable declarada
 def p_vars_assign(p):
     '''
-    vars_assign : EQUAL_OP constante
+    vars_assign : EQUAL_OP constante pnVarAssign
     '''
 
 #Creacion de variable de tipo arreglo o matriz
@@ -586,14 +640,13 @@ def p_array_loop(p):
 def p_function(p):
     '''
     function : empty
-             | FUNC function_auxTypeId LPAREN function_predicate RPAREN pnFuncGen3 bloque function
+             | FUNC function_auxTypeId LPAREN function_predicate RPAREN pnInsertParams bloque pnEndProc function
     '''
-    #TODO: borre "vars" antes de "bloque" probablemente no debi haberlo hecho
 
 def p_function_auxTypeId(p):
     '''
-    function_auxTypeId : VOID ID pnFuncGen1
-                       | type ID pnFuncGen1
+    function_auxTypeId : VOID ID pnTipoIdFuncion
+                       | type ID pnTipoIdFuncion
     '''
 
 def p_function_predicate(p):
@@ -604,7 +657,7 @@ def p_function_predicate(p):
 
 def p_func_params(p):
     '''
-    func_params : type ID pnFuncGen2 func_params_loop
+    func_params : type ID pnTipoIdParam func_params_loop
     '''
 
 def p_func_params_loop(p):
@@ -632,6 +685,14 @@ def p_constante(p):
               | MINUS_OP pnNegConst constante_num
               | constante_num
     '''
+    #Correcion para que funcione incluso cuando es un número negativo
+    if p[1] == '-':
+        p[0] = -1 * p[3]
+    else:
+        p[0] = p[1]
+
+    global negativeConstant
+    negativeConstant = False
 
 def p_constante_num(p):
     '''
@@ -642,7 +703,7 @@ def p_constante_num(p):
 
 def p_main(p):
     '''
-    main : VOID MAIN LPAREN RPAREN pnCreateFunctionMain bloque
+    main : VOID MAIN pnFillGotoMain LPAREN RPAREN pnCreateFunctionMain bloque
     '''
 
 def p_bloque(p):
@@ -661,12 +722,34 @@ def p_estatuto(p):
              | condicion
              | escritura
              | lectura
+             | func_call
              | sfunc_call
              | ciclo
              | retorno
              | vars
     '''
     print("Creado estatuto de:", p[1])
+
+def p_func_call(p):
+    '''
+    func_call : empty
+              | ID LPAREN pnQuadEra params RPAREN pnQuadGoSub SEMIC func_call
+
+    '''
+
+    print('Si se pudo hacer la func_call')
+
+def p_params(p):
+    '''
+    params : paramsaux
+           | empty
+    '''
+
+def p_paramsaux(p):
+    '''
+    paramsaux : full_exp COMMA pnAgregaParam paramsaux
+              | full_exp pnAgregaParam
+    '''
 
 def p_sfunc_call(p):
     '''
@@ -781,7 +864,20 @@ def p_factor(p):
 
 def p_retorno(p):
     '''
-    retorno : RETURN full_exp SEMIC
+    retorno : RETURN asd retorno_predicate pnQuadRetorno SEMIC
+    '''
+    print("LLEGUE")
+
+def p_asd(p):
+    '''
+    asd :
+    '''
+    print("error antes de return p:", p)
+
+def p_retorno_predicate(p):
+    '''
+    retorno_predicate : full_exp
+                      | empty
     '''
 
 def p_var_cte(p):
@@ -855,6 +951,7 @@ def p_empty(p):
 
 def p_error(p):
     print ("Syntax error in line " + str(lexer.lineno))
+    print("ERROR LOCO EN: ",p)
     sys.exit()
     return
 
@@ -878,11 +975,31 @@ def p_pnCreateFunctionMain(p):
     currentContVars = 0
 
 '''
+Agrega el cuadruplo necesario para ir a main, que es lo primero que se ejecuta
+'''
+def p_pnGotoMain(p):
+    '''
+    pnGotoMain :
+    '''
+    printAuxQuad('GOTO', '', '', '')
+    pushSalto(nextQuad() - 1)
+
+'''
+Rellena el GOTO Main con el cuádruplo donde inicia
+'''
+def p_pnFillGotoMain(p):
+    '''
+    pnFillGotoMain :
+    '''
+    global arregloQuads
+    arregloQuads[popSaltos()] = ('GOTO', '', '', nextQuad())
+
+'''
 Punto neuralgico de anadir id a pOper y pType
 '''
 def p_pnQuadGenExp1(p):
     '''
-        pnQuadGenExp1 :
+    pnQuadGenExp1 :
     '''
     global currentFunction
     global dirFunciones
@@ -1254,7 +1371,7 @@ def p_pnVarSimple(p):
     print("nombre: ", p[-1])
     #Agregar variable simple a directorio de funciones en current function
     dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
-    currentContVars = currentContVars + 1 #Se lleva una variable
+    currentContVars = currentContVars + 1 #Incrementa el contador de variables
 
 '''
 Punto neuralgico para crear una variable con su respectiva asignacion de valor
@@ -1263,6 +1380,16 @@ def p_pnVarAssign(p):
     '''
     pnVarAssign :
     '''
+    constante = p[-1]
+    varId = p[-3]
+    varTipo = p[-4]
+    global currentFunction
+    global dirFunciones
+    global currentContVars
+    #Agregar variable de asignacion a directorio de funciones en current function
+    dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
+    printAuxQuad(OPERADOR_ASIGNACION[0], constante, '', varId)
+    currentContVars = currentContVars + 1 #Incrementa el contador de variables
 
 
 '''
@@ -1318,24 +1445,30 @@ def p_pnQuadGenCteFloat(p):
 Puntos neuralgicos para la creacion de funciones y sus respectivas inicializaciones
 '''
 #Inicializacion de variables para conteo de parametros y variables de la nueva funcion
-def p_pnFuncGen1(p):
+def p_pnTipoIdFuncion(p):
     '''
-    pnFuncGen1 :
+    pnTipoIdFuncion :
     '''
     global currentFunction
     global currentFunctionType
     global currentContVars
-    global currentContParameters
+    global currentContParameters #Numero de parametros que tendra la funcion
+    global retornoFlag #Bandera para saber si el contexto(funcion) actual ocupa un retorno
     currentContParameters = 0 #Se reinician los contadores de parametros y variables para la funcion
     currentContVars = 0
     currentFunction = p[-1] #Current function = id de la funcion que se quiere crear
     currentFunctionType = str(p[-2])
     dirFunciones.add_function(currentFunction, currentFunctionType, currentContParameters, nextQuad())
+    #Checar  si el tipo es VOID o no, para saber si la funcion ocupa un retorno de valor forzoso
+    if dirFunciones.diccionario[currentFunction]['tipo'] == 'void':
+        retornoFlag = False;
+    else:
+        retornoFlag = True;
 
-#Funcion para contabilizar los parametros
-def p_pnFuncGen2(p):
+#Agrega los tipos y ids de las variables parametros encontradas, luego incrementa el contador de parametros
+def p_pnTipoIdParam(p):
     '''
-    pnFuncGen2 :
+    pnTipoIdParam :
     '''
     global currentFunction
     global currentContParameters
@@ -1344,15 +1477,138 @@ def p_pnFuncGen2(p):
     #Se agrega en el contexto local, con el tipo y id definidos, y siendo no dimensionada
     dirFunciones.add_varToFunction(currentFunction, p[-1], p[-2], 0, 0)
 
-#Funcion para actualizar el numero de parametros de una funcion ya definida
-def p_pnFuncGen3(p):
+def p_pnTipoIdVar(p):
     '''
-    pnFuncGen3 :
+    pnTipoIdVar :
+    '''
+    global currentFunction
+    global currentContParameters
+    currentContParameters += 1
+    dirFunciones.add_varToFunction(currentFunction, p[-1], p[-2], 0, 0)
+
+#Funcion para actualizar el numero de parametros de una funcion ya definida
+def p_pnInsertParams(p):
+    '''
+    pnInsertParams :
     '''
     global dirFunciones
     global currentFunction
     global currentContParameters
     dirFunciones.update_functionParams(currentFunction, currentContParameters)
+
+
+#Genera la accion para finalizar la funcion
+def p_pnEndProc(p):
+    '''
+    pnEndProc :
+    '''
+    global memoriaLocal
+    memoriaLocal = [0, index_intLocales, index_floatLocales, index_boolLocales] #resetea la memoria local
+    printAuxQuad('ENDPROC', '', '', '')
+
+#Valida que la funcion a llamar exista en el directorio de funciones y genera la accion ERA
+def p_pnQuadEra(p):
+    '''
+    pnQuadEra :
+    '''
+    global pFunciones
+    global pArgumentos
+
+    function = p[-2] #toma el nombre de la funcion
+    # 1. Verify that the procedure exists into the DirFunc
+    if function in dirFunciones.diccionario:
+        pFunciones.append(function) #añade la funcion a la pila de funciones
+        #print(pFunciones)
+        # 2. Generate action ERA size
+        printAuxQuad('ERA', function, '', '') #genera cuadruplo ERA con el nombre de a funcion
+        pArgumentos.append(0) #en este momento ha recibido 0 argumentos para la llamada a funcion
+        #print(pArgumentos)
+
+    else:
+        print('ERROR. Function not declared')
+        sys.exit()
+        return
+
+def p_pnAgregaParam(p):
+    '''
+    pnAgregaParam :
+    '''
+    global pArgumentos
+    global pFunciones
+    global currentFunction
+    # 3. Obtain Argument and ArgumentType
+    argument = popOperandos()
+    argumentType = popTipos()
+    function = pFunciones.pop()
+    args = pArgumentos.pop() + 1
+
+    pArgumentos.append(args)
+    param = 'param' + str(args)
+    #print(param)
+
+    functionParams = dirFunciones.diccionario[function]['cantParametros'] #toma la cantidad de parametros de la funcion referenciada
+    print(functionParams)
+    lista = dirFunciones.listTypes(function)
+    #tipos = list(dirFunciones.diccionario[function]['tipo'].values()) # obtiene todos los tipos
+    #print("LISTA", lista)
+    #print(args)
+    if functionParams >= args:
+        # 3. Verify Argument Type against current Parameter (#k) in Parameter Table
+        #aux1 = lista[args-1]
+        #aux2 = argumentType
+        #print(aux1, aux2)
+        if lista[args-1] == argumentType:
+            printAuxQuad('PARAMETER', argument, '', param)
+        else:
+            print("Error, los parametros no coinciden")
+    else:
+        print("Error, demasiados argumentos")
+        sys.exit()
+
+
+    pFunciones.append(function)
+
+
+def p_pnQuadGoSub(p):
+    '''
+    pnQuadGoSub :
+    '''
+    global pFunciones
+    global pArgumentos
+    args = pArgumentos.pop()
+    function = pFunciones.pop()
+    # 5. Verify that the last parameter points to null
+    if args == dirFunciones.diccionario[function]['cantParametros']:
+        # 6. Generate action GOSUB, procedure-name, '', initial address
+        printAuxQuad('GOSUB', function, '', nextQuad()+1)
+        #printAuxQuad('GOSUB', function, nextQuad()+1, dirFunciones.diccionario[function][3])
+    else:
+        print ('ERROR. Argument mysmatch')
+        sys.exit()
+        return
+
+def p_pnQuadRetorno(p):
+    '''
+    pnQuadRetorno :
+    '''
+    global currentFunction
+    global retornoFlag #SAber si tengo que regresar un valor o no
+
+    if not retornoFlag:
+        if p[-1] == 'return':
+            #Si no tengo regresar nada y no le estoy mandando nada
+            printAuxQuad('RETURN', '', '', '')
+        else:
+            printReturnError()
+    else: #si si tengo que regresar algo
+        operandoRet = popOperandos()
+        tipoRet = popTipos()
+        #si los tipos son correctos se crea el cuadruplo con el operando regresado
+        if dirFunciones.diccionario[currentFunction]['tipo'] == tipoRet:
+            printAuxQuad('RETURN', '', '', operandoRet)
+        else:
+            #Si no es correcto los tipos, se genera un error
+            printReturnError()
 
 #Defining Lexer & Parser
 parser = yacc.yacc()
