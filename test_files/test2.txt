@@ -1,21 +1,38 @@
-program tiranosaurio:
+program patito:
 
-	int a;
+	int i;
+	int j;
+	int k;
+	float f;
 
-func int suma(){
-	int alfa;
-	int beta;
-	int res;
+func void uno(int a, int b){
+	if(a>0){
+	i = a + b * j + i;
+	print(i + j);
+	uno(a-i, i);
+	}
+	else{
+	print(a + b);
+	};
+	return;
+}
 
-	res = alfa + beta;
-	return res;
+func int dos(int a, float g){
+	int i;
+	i = a;
+	while(a>0){
+		a = a - k * j;
+		uno(a*2, a+k);
+		g = g * j - k;
+	};
+	return i+k*j;
 }
 
 void main(){
-	float x;
-	float b;
-
-	x = a / b;
-	print(x)
-	
+	i = 2;
+	k = i+1;
+	f = 3.14;
+	print(i, j*2, f*2 + 1.5);
+	i = i - k;
+	return;
 }

@@ -63,6 +63,11 @@ currentContVars = 0 #Cantidad de variables para la funcion actualmente siendo co
 retornoFlag = False #bandera para detectar cuando una funcion debe o no tener valor de retorno
 
 '''
+Variables para el manejo de arreglos y matrices
+'''
+
+
+'''
 Funciones para simular y manejar pilas (push, pop, top)
 '''
 #Toma el ultimo elemento de Pila de Operandos
@@ -526,7 +531,7 @@ def t_ID(t):
     elif t.value == 'randfloatmat':
         t.type = 'RANDFLOATMAT'
     elif t.value == 'return':
-        t.type == 'RETURN'
+        t.type = 'RETURN'
     else:
         t.type = 'ID'
     return t
@@ -582,6 +587,8 @@ def p_vars_array(p):
     '''
     vars_array : LBRACK INT_CTE RBRACK vars_array_predicate
     '''
+
+#poner pnVarArray despues de LBRACK tipo = p[-3] id = p[-2]
 
 #Predicados posibles para la declaracion de arreglos
 def p_vars_array_predicate(p):
@@ -732,12 +739,10 @@ def p_estatuto(p):
 
 def p_func_call(p):
     '''
-    func_call : empty
-              | ID LPAREN pnQuadEra params RPAREN pnQuadGoSub SEMIC func_call
+    func_call : ID LPAREN pnQuadEra params RPAREN pnQuadGoSub SEMIC
 
     '''
-
-    print('Si se pudo hacer la func_call')
+    p[0] = 'func_call'
 
 def p_params(p):
     '''
@@ -864,20 +869,8 @@ def p_factor(p):
 
 def p_retorno(p):
     '''
-    retorno : RETURN asd retorno_predicate pnQuadRetorno SEMIC
-    '''
-    print("LLEGUE")
-
-def p_asd(p):
-    '''
-    asd :
-    '''
-    print("error antes de return p:", p)
-
-def p_retorno_predicate(p):
-    '''
-    retorno_predicate : full_exp
-                      | empty
+    retorno : RETURN full_exp pnQuadRetorno SEMIC
+            | RETURN pnQuadRetorno SEMIC
     '''
 
 def p_var_cte(p):
@@ -895,30 +888,30 @@ def p_var_cte_predicate(p):
 
 def p_sfunc(p):
     '''
-    sfunc : ARRANGE spfunc_two_params
-          | ZEROS spfunc_params
-          | ONES spfunc_params
-          | SUM spfunc_params
-          | FACT spfunc_params
-          | MEAN spfunc_params
-          | MEDIAN spfunc_params
-          | MODE spfunc_params
-          | STDEV spfunc_params
-          | VAR spfunc_params
-          | SORT spfunc_params
-          | TRANSPOSE spfunc_params
-          | READCSV spfunc_params
-          | PLOTHIST spfunc_params
-          | COVARIANCE spfunc_two_params
-          | CORRELATION spfunc_two_params
-          | EXPORTCSV spfunc_two_params
-          | PLOTLINE spfunc_two_params
-          | EXCHANGE spfunc_two_params
-          | LINEAREG spfunc_two_params
-          | RANDINT spfunc_three_params
-          | RANDFLOAT spfunc_three_params
-          | RANDINTMAT spfunc_four_params
-          | RANDFLOATMAT spfunc_four_params
+    sfunc : ARRANGE npSpecialFunctionId spfunc_two_params
+          | ZEROS npSpecialFunctionId spfunc_params pnValidateParam
+          | ONES npSpecialFunctionId spfunc_params pnValidateParam
+          | SUM npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+          | FACT npSpecialFunctionId spfunc_params pnValidateParam
+          | MEAN npSpecialFunctionId LPAREN ID  pnValidateId RPAREN
+          | MEDIAN npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+          | MODE npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+          | STDEV npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+          | VAR npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+          | SORT npSpecialFunctionId spfunc_params
+          | TRANSPOSE npSpecialFunctionId spfunc_params
+          | READCSV npSpecialFunctionId spfunc_params
+          | PLOTHIST npSpecialFunctionId spfunc_params
+          | COVARIANCE npSpecialFunctionId spfunc_two_params
+          | CORRELATION npSpecialFunctionId spfunc_two_params
+          | EXPORTCSV npSpecialFunctionId spfunc_two_params
+          | PLOTLINE npSpecialFunctionId spfunc_two_params
+          | EXCHANGE npSpecialFunctionId spfunc_two_params
+          | LINEAREG npSpecialFunctionId spfunc_two_params
+          | RANDINT npSpecialFunctionId spfunc_three_params
+          | RANDFLOAT npSpecialFunctionId spfunc_three_params
+          | RANDINTMAT npSpecialFunctionId spfunc_four_params
+          | RANDFLOATMAT npSpecialFunctionId spfunc_four_params
     '''
 
 def p_spfunc_params(p):
@@ -1503,8 +1496,10 @@ def p_pnEndProc(p):
     pnEndProc :
     '''
     global memoriaLocal
+    global retornoFlag
     memoriaLocal = [0, index_intLocales, index_floatLocales, index_boolLocales] #resetea la memoria local
     printAuxQuad('ENDPROC', '', '', '')
+    retornoFlag = False
 
 #Valida que la funcion a llamar exista en el directorio de funciones y genera la accion ERA
 def p_pnQuadEra(p):
@@ -1610,6 +1605,44 @@ def p_pnQuadRetorno(p):
             #Si no es correcto los tipos, se genera un error
             printReturnError()
 
+#Funcion que guarda el id de una funcion especial de Jubilo
+def p_npSpecialFunctionId(p):
+    '''
+    npSpecialFunctionId :
+    '''
+    nombreSFunc = str(p[-1])
+    pushOperador(nombreSFunc)
+
+
+#Valida una funcion de un solo parametro de entrada, este parametro es de tipo full exp
+#Genera el cuadruplo para realizar la funcion
+def p_pnValidateParam(p):
+    '''
+    pnValidateParam :
+    '''
+    #se usan las pilas de operandos y operadores porque el parametro de la funcion es de tipo full exp
+    specialFunction = popOperadores()
+    param = popOperandos()
+    tipoParam = popTipos()
+    tipoFunction = funcValida.get_tipo(specialFunction, tipoParam, '') #revisa en el cubo semantico
+    resultTemporal = nextAvail(tipoFunction)
+    if tipoFunction == 'error':
+        printTypeMismatch()
+    else:
+        pushTipo(tipoFunction) #guarda el tipo de resultado de la funcion especial
+        pushOperando(resultTemporal)
+        printAuxQuad(specialFunction, param, '', resultTemporal)
+
+#Valida una funcion de un solo parametro de entrada, este parametro es de tipo ID
+def p_pnValidateId(p):
+    '''
+    pnValidateId :
+    '''
+    nombreId = str(p[-1])
+    specialFunction = popOperadores()
+
+    #pendiente porque esto necesita la implementacion de arreglitos
+
 #Defining Lexer & Parser
 parser = yacc.yacc()
 lexer = lex.lex()
@@ -1617,7 +1650,7 @@ lexer = lex.lex()
 '''
 Para probar el parser desde archivo
 '''
-name = './test_files/test1.txt'
+name = './test_files/test2.txt'
 
 with open(name, 'r') as archive:
     s = archive.read()
