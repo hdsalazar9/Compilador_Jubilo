@@ -71,7 +71,7 @@ class Jubilo_DirFunc:
         else:
             print("Error: Imposible actualizar parametros de una funcion no existente: ", nombre)
 
-        print("Funcion creada: ", nombre, " de tipo: ", self.diccionario[nombre]['tipo'], " con cantParametros: ", cantParametros)
+        #print("Funcion creada: ", nombre, " de tipo: ", self.diccionario[nombre]['tipo'], " con cantParametros: ", cantParametros)
 
     '''
     Funcion que intenta agregar una variable a la funcion nombre

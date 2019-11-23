@@ -1,12 +1,11 @@
-program patito:
+program pa:
 
-	int a;
-	int b;
-	float f;
+int a = 0;
 
-func void uno(int x, float y, bool z){
-
-	return;
+<<<<<<< Updated upstream
+func void uno(){
+int a = 3;
+return;
 }
 
 func int dos(int a, int b){
@@ -17,17 +16,28 @@ func int dos(int a, int b){
 		i = i - 1;
 	};
 	return i;
-}
-
-func float suma(int alfa, int beta){
-	int resultado = 0;
-	resultado = alfa + beta;
-	return resultado;
+=======
+func int raul(int a, float b, bool c){
+	int z;
+>>>>>>> Stashed changes
 }
 
 
 void main(){
-	b = a + f;
-	suma(2,3);
+<<<<<<< Updated upstream
+	float b;
+	b = a + a;
+	dos(2,3);
 	return;
 }
+=======
+	float c;
+	c = 4 + 5;
+	while( 5 < 4 + 3.5 && true ){
+	print(a);
+	};
+	int d;
+	print( c - 5.6);
+	read(b);
+}
+>>>>>>> Stashed changes

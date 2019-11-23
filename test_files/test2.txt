@@ -25,7 +25,7 @@ func int dos(int a, float g){
 		uno(a*2, a+k);
 		g = g * j - k;
 	};
-	return i+k*j;
+	return i + k * j;
 }
 
 void main(){
