@@ -47,6 +47,19 @@ class Jubilo_TablaVars:
             return True
 
     '''
+    Funcion para actualizar renglones y columas de una variable previamente creada
+    '''
+    def update_varDimensions(self, nombre, renglones, columnas):
+        #Si ya existe la variable actualizar su numero de renglones y columnas
+        if self.exist_var(nombre):
+            self.diccionario[nombre]['renglones'] = renglones
+            self.diccionario[nombre]['columnas'] = columnas
+        #Si no existe desplegar error
+        else:
+            print("Error. Imposible actualizar dimensiones de una variale no existente: ", nombre)
+        print("Variable: ", nombre, "Renglones actualizados: ", self.diccionario[nombre]['renglones'], "Columnas actualizadas: ", self.diccionario[nombre]['columnas'])
+       
+    '''
     Funcion que busca y regresa una variable y sus datos, del diccionario.
     ~ TODO:
     '''

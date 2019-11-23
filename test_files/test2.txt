@@ -3,7 +3,7 @@ program patito:
 	int i;
 	int j;
 	int k;
-	float f;
+	float f = i * j / k;
 
 func void uno(int a, int b){
 	if(a>0){

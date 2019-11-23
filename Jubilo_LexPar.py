@@ -65,6 +65,12 @@ retornoFlag = False #bandera para detectar cuando una funcion debe o no tener va
 '''
 Variables para el manejo de arreglos y matrices
 '''
+reng = 0 #contador para los renglones de una funcion
+col = 0 #contador para las columnas de una funcion
+R = 1 #ira acumulando valor para ser m0
+base = 0 #guarda la direccion base de una variable dimensionada
+
+
 
 
 '''
@@ -555,11 +561,8 @@ def p_programa(p):
 #Declaracion de variables, puede ser recursivo y declarar varias variables
 def p_vars(p):
     '''
-    vars : type ID vars_predicate
+    vars : type ID pnVarSimple vars_predicate
     '''
-
-    # le puse pnTipoIdVar despues de ID
-    #print("Variable", "de tipo ", " creada.")
 
 #Permite que en el inicio de un programa pueda crear varias variables globales
 def p_vars_loop(p):
@@ -571,15 +574,15 @@ def p_vars_loop(p):
 #Predicados posibles para la declaracion de variables
 def p_vars_predicate(p):
     '''
-    vars_predicate : pnVarSimple SEMIC
-                   | vars_assign SEMIC
+    vars_predicate : SEMIC pnVarSimple2
+                   | vars_assign SEMIC pnQuadGenSec2
                    | vars_array SEMIC
     '''
 
 #Asignacion de constante a una variable declarada
 def p_vars_assign(p):
     '''
-    vars_assign : EQUAL_OP constante pnVarAssign
+    vars_assign : EQUAL_OP pnQuadGenSec1 full_exp
     '''
 
 #Creacion de variable de tipo arreglo o matriz
@@ -587,8 +590,6 @@ def p_vars_array(p):
     '''
     vars_array : LBRACK INT_CTE RBRACK vars_array_predicate
     '''
-
-#poner pnVarArray despues de LBRACK tipo = p[-3] id = p[-2]
 
 #Predicados posibles para la declaracion de arreglos
 def p_vars_array_predicate(p):
@@ -1364,26 +1365,20 @@ def p_pnVarSimple(p):
     print("nombre: ", p[-1])
     #Agregar variable simple a directorio de funciones en current function
     dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
+    #Agregar variable y su tipo a la pila por si se llega a utilizar
+    pushTipo(varTipo)
+    pushOperando(varId)
     currentContVars = currentContVars + 1 #Incrementa el contador de variables
 
 '''
-Punto neuralgico para crear una variable con su respectiva asignacion de valor
+Punto neuralgico de que no se le asignara nada a esa variable
 '''
-def p_pnVarAssign(p):
+def p_pnVarSimple2(p):
     '''
-    pnVarAssign :
+    pnVarSimple2 :
     '''
-    constante = p[-1]
-    varId = p[-3]
-    varTipo = p[-4]
-    global currentFunction
-    global dirFunciones
-    global currentContVars
-    #Agregar variable de asignacion a directorio de funciones en current function
-    dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
-    printAuxQuad(OPERADOR_ASIGNACION[0], constante, '', varId)
-    currentContVars = currentContVars + 1 #Incrementa el contador de variables
-
+    varTipo = popTipos()
+    varId = popOperandos()
 
 '''
 Puntos neuralgicos para recepcion de constantes y meter su valor en pila de operandos
@@ -1468,15 +1463,6 @@ def p_pnTipoIdParam(p):
     currentContParameters += 1
     #Agregar cada parametro como variable dentro de la tabla de variables de la funcion
     #Se agrega en el contexto local, con el tipo y id definidos, y siendo no dimensionada
-    dirFunciones.add_varToFunction(currentFunction, p[-1], p[-2], 0, 0)
-
-def p_pnTipoIdVar(p):
-    '''
-    pnTipoIdVar :
-    '''
-    global currentFunction
-    global currentContParameters
-    currentContParameters += 1
     dirFunciones.add_varToFunction(currentFunction, p[-1], p[-2], 0, 0)
 
 #Funcion para actualizar el numero de parametros de una funcion ya definida

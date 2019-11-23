@@ -90,6 +90,16 @@ class Jubilo_DirFunc:
         print(self.diccionario[nombre]['variables'].diccionario)
 
     '''
+    Funcion que llama a la funcion en TablaVars para actualizar renglones y columnas de una variable
+    '''
+    def update_dimensions(self, nombre, nombreVar, renglones, columnas):
+        if self.diccionario[nombre]['variables'].exist_var(nombreVar):
+            return self.diccionario[nombre]['variables'].update_varDimensions(nombreVar, renglones, columnas)
+        else:
+            print("Warning: Variable ", nombreVar, "no existe en este contexto ", nombre)
+            return None
+
+    '''
     Funcion que regresa el string del tipo de una variable previamente creada en las funciones
     ~TODO:
     '''
