@@ -9,7 +9,7 @@ class Jubilo_CuboSemantico_SFuncs:
         '''
         Este diccionario establece todas las combinaciones posibles entre
         las funciones especiales y sus posibles operandos de parametro para todos
-        los tipos de datos manejados por Jubilo (int, float, bool, char) en la forma ->
+        los tipos de datos manejados por Jubilo (int, float, bool) en la forma ->
 
         (special_funcion, operando1, operando2) : tipo de operando resultado
         '''
@@ -47,20 +47,12 @@ class Jubilo_CuboSemantico_SFuncs:
 
             ( 'sort' , 'int' , '' ) : 'int',
             ( 'sort' , 'float' , '' ) : 'float',
-            ( 'sort' , 'char' , '' ) : 'char',
 
             ( 'transpose' , 'int' , '' ) : 'int',
             ( 'transpose' , 'float', '') : 'float',
 
-            ( 'readcsv' , 'string' , 'int' ) : 'int',
-            ( 'readcsv' , 'string' , 'float' ) : 'float',
-            ( 'readcsv' , 'string' , 'string' ) : 'string',
-            ( 'readcsv' , 'string' , 'char' ) : 'char',
-
-            ( 'exportcsv' , 'string' , 'int' ) : 'bool',
-            ( 'exportcsv' , 'string' , 'float' ) : 'bool',
-            ( 'exportcsv' , 'string' , 'string' ) : 'bool',
-            ( 'exportcsv' , 'string' , 'char' ) : 'bool',
+            ( 'readcsv' , 'string' , '' ) : 'bool',
+            ( 'exportcsv' , 'string' , '' ) : 'bool',
 
             ( 'plothist' , 'int', '' ) : 'histogram',
             ( 'plothist' , 'float', '') : 'histogram',
@@ -73,9 +65,8 @@ class Jubilo_CuboSemantico_SFuncs:
             #Se puede regresar vacio? Pregunta para mi yo del futuro. v
             #Tas bien guapo we. Para Hector del futuro cuando este triste
             ('exchange', 'int', 'int'): '',
-            ('exchange', 'string', 'string'): '',
+            ('exchange', 'bool', 'bool'): '',
             ('exchange', 'float', 'float'): '',
-            ('exchange', 'char', 'char'): '',
 
             ( 'lineareg' , 'int' , 'int' ) : 'float',
             ( 'lineareg' , 'int' , 'float' ) : 'float',

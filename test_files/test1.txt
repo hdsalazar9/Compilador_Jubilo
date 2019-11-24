@@ -1,43 +1,25 @@
-program pa:
+program pato:
 
 int a = 0;
+int b = a + 2;
+float c = 2.3  * 5.2;
 
-<<<<<<< Updated upstream
 func void uno(){
-int a = 3;
+int cont = 1;
+
 return;
 }
 
-func int dos(int a, int b){
-	int i;
-	i = b;
-	while(i>0){
-		a = a + b * i + b;
-		i = i - 1;
-	};
-	return i;
-=======
-func int raul(int a, float b, bool c){
-	int z;
->>>>>>> Stashed changes
-}
+func void dos(int alfa, int beta){
+int resultado;
+resultado = alfa * beta;
 
+}
 
 void main(){
-<<<<<<< Updated upstream
-	float b;
-	b = a + a;
-	dos(2,3);
+
+	float d;
+	d = a + a;
+	dos(a,b);
 	return;
 }
-=======
-	float c;
-	c = 4 + 5;
-	while( 5 < 4 + 3.5 && true ){
-	print(a);
-	};
-	int d;
-	print( c - 5.6);
-	read(b);
-}
->>>>>>> Stashed changes

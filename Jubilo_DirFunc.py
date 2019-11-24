@@ -24,14 +24,12 @@ class Jubilo_DirFunc:
 
     '''
     Funcion para saber si existe una funcion en el diccionario.
-    ~ TODO:
     '''
     def exist_function(self, nombre):
         return nombre in self.diccionario.keys()
 
     '''
     Funcion que busca y regresa una funcion y sus datos, del diccionaro.
-    ~ TODO:
     '''
     def search_function(self, nombre):
         if self.exist_function(nombre):
@@ -41,7 +39,6 @@ class Jubilo_DirFunc:
 
     '''
     Funcion para agregar una nueva funcion al Diccionario
-    ~TODO:
     '''
     def add_function(self, nombre, tipo, cantParametros, quadCont):
         #Revisar que no se haya definido ya una funcion con el mismo nombre
@@ -75,15 +72,14 @@ class Jubilo_DirFunc:
 
     '''
     Funcion que intenta agregar una variable a la funcion nombre
-    ~ TODO:
     '''
-    def add_varToFunction(self, nombre, nombreVar, tipoVar, renglonesVar, columnasVar):
+    def add_varToFunction(self, nombre, nombreVar, tipoVar, renglonesVar, columnasVar, memPos):
         '''
         Dentro de mi diccionario de funciones, ir a la funcion nombre
         En su atributo variables e intentar agregar la nueva variable.
         Si regresa verdadero se pudo crear, si regresa falso ya existia esa variable.
         '''
-        if self.diccionario[nombre]['variables'].add_var(nombreVar, tipoVar, renglonesVar, columnasVar):
+        if self.diccionario[nombre]['variables'].add_var(nombreVar, tipoVar, renglonesVar, columnasVar, memPos):
             print("Variable: ", nombreVar, " creada en la funcion: ", nombre)
         else:
             print("Error: No es posible crear variable: ", nombreVar, ", en la funcion: ", nombre)
@@ -101,7 +97,6 @@ class Jubilo_DirFunc:
 
     '''
     Funcion que regresa el string del tipo de una variable previamente creada en las funciones
-    ~TODO:
     '''
     def search_varType(self, nombre, nombreVar):
         if self.diccionario[nombre]['variables'].exist_var(nombreVar):
@@ -111,10 +106,20 @@ class Jubilo_DirFunc:
             return None
 
     '''
+    Funcion que regresa la posicion de memoria de una variable previamente creada en la tabla de variable
+    '''
+    def search_memPos(self, nombre, nombreVar):
+        if self.diccionario[nombre]['variables'].exist_var(nombreVar):
+            return self.diccionario[nombre]['variables'].search_memPos(nombreVar)
+        else:
+            print("Warning: Variable: ", nombreVar ," no existe en este contexto: ", nombre)
+            return None
+
+    '''
     Pone en forma de lista los tipos encontrados en Jubilo_TablaVars
     '''
     def listTypes(self, function):
-        return [ self.diccionario[function]['variables'].diccionario[x] ['tipo'] for x in self.diccionario[function]['variables'].diccionario]
+        return [ self.diccionario[function]['variables'].diccionario[x]['tipo'] for x in self.diccionario[function]['variables'].diccionario]
 
     '''
     Funcion que regresa si existe una variable en la tabla de variables de la funcion dada

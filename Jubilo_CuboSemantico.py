@@ -9,7 +9,7 @@ class Jubilo_CuboSemantico:
         '''
         Este diccionario establece todas las combinaciones posibles entre
         dos operandos para todos los tipos de datos manejados por Jubilo
-        (int, float, bool, char) en la forma ->
+        (int, float, bool) en la forma ->
 
         (operando1, operando2, operador) : tipo de operando resultado
         '''
@@ -56,20 +56,6 @@ class Jubilo_CuboSemantico:
             ( 'int' , 'bool' , '||' ) : 'error',
             ( 'int' , 'bool' , '&&' ) : 'error',
 
-            ( 'int' , 'char' , '+' ) : 'error',
-            ( 'int' , 'char' , '-' ) : 'error',
-            ( 'int' , 'char' , '*' ) : 'error',
-            ( 'int' , 'char' , '/' ) : 'error',
-            ( 'int' , 'char' , '=' ) : 'error',
-            ( 'int' , 'char' , '==' ) : 'error',
-            ( 'int' , 'char' , '<' ) : 'error',
-            ( 'int' , 'char' , '>' ) : 'error',
-            ( 'int' , 'char' , '<=' ) : 'error',
-            ( 'int' , 'char' , '>=' ) : 'error',
-            ( 'int' , 'char' , '!=' ) : 'error',
-            ( 'int' , 'char' , '||' ) : 'error',
-            ( 'int' , 'char' , '&&' ) : 'error',
-
             ( 'float' , 'int' , '+' ) : 'float',
             ( 'float' , 'int' , '-' ) : 'float',
             ( 'float' , 'int' , '*' ) : 'float',
@@ -111,20 +97,6 @@ class Jubilo_CuboSemantico:
             ( 'float' , 'bool' , '!=' ) : 'error',
             ( 'float' , 'bool' , '||' ) : 'error',
             ( 'float' , 'bool' , '&&' ) : 'error',
-
-            ( 'float' , 'char' , '+' ) : 'error',
-            ( 'float' , 'char' , '-' ) : 'error',
-            ( 'float' , 'char' , '*' ) : 'error',
-            ( 'float' , 'char' , '/' ) : 'error',
-            ( 'float' , 'char' , '=' ) : 'error',
-            ( 'float' , 'char' , '==' ) : 'error',
-            ( 'float' , 'char' , '<' ) : 'error',
-            ( 'float' , 'char' , '>' ) : 'error',
-            ( 'float' , 'char' , '<=' ) : 'error',
-            ( 'float' , 'char' , '>=' ) : 'error',
-            ( 'float' , 'char' , '!=' ) : 'error',
-            ( 'float' , 'char' , '||' ) : 'error',
-            ( 'float' , 'char' , '&&' ) : 'error',
 
             ( 'bool' , 'int' , '+' ) : 'error',
             ( 'bool' , 'int' , '-' ) : 'error',
@@ -168,86 +140,15 @@ class Jubilo_CuboSemantico:
             ( 'bool' , 'bool' , '||' ) : 'bool',
             ( 'bool' , 'bool' , '&&' ) : 'bool',
 
-            ( 'bool' , 'char' , '+' ) : 'error',
-            ( 'bool' , 'char' , '-' ) : 'error',
-            ( 'bool' , 'char' , '*' ) : 'error',
-            ( 'bool' , 'char' , '/' ) : 'error',
-            ( 'bool' , 'char' , '=' ) : 'error',
-            ( 'bool' , 'char' , '==' ) : 'error',
-            ( 'bool' , 'char' , '<' ) : 'error',
-            ( 'bool' , 'char' , '>' ) : 'error',
-            ( 'bool' , 'char' , '<=' ) : 'error',
-            ( 'bool' , 'char' , '>=' ) : 'error',
-            ( 'bool' , 'char' , '!=' ) : 'error',
-            ( 'bool' , 'char' , '||' ) : 'error',
-            ( 'bool' , 'char' , '&&' ) : 'error',
+            ('read', 'int', '') : 'string',
+            ('read', 'float', '') : 'string',
+            ('read', 'bool', '') : 'string',
+            ('read', 'string', '') : 'error',
 
-            ( 'char' , 'int' , '+' ) : 'error',
-            ( 'char' , 'int' , '-' ) : 'error',
-            ( 'char' , 'int' , '*' ) : 'error',
-            ( 'char' , 'int' , '/' ) : 'error',
-            ( 'char' , 'int' , '=' ) : 'error',
-            ( 'char' , 'int' , '==' ) : 'error',
-            ( 'char' , 'int' , '<' ) : 'error',
-            ( 'char' , 'int' , '>' ) : 'error',
-            ( 'char' , 'int' , '<=' ) : 'error',
-            ( 'char' , 'int' , '>=' ) : 'error',
-            ( 'char' , 'int' , '!=' ) : 'error',
-            ( 'char' , 'int' , '||' ) : 'error',
-            ( 'char' , 'int' , '&&' ) : 'error',
-
-            ( 'char' , 'float' , '+' ) : 'error',
-            ( 'char' , 'float' , '-' ) : 'error',
-            ( 'char' , 'float' , '*' ) : 'error',
-            ( 'char' , 'float' , '/' ) : 'error',
-            ( 'char' , 'float' , '=' ) : 'error',
-            ( 'char' , 'float' , '==' ) : 'error',
-            ( 'char' , 'float' , '<' ) : 'error',
-            ( 'char' , 'float' , '>' ) : 'error',
-            ( 'char' , 'float' , '<=' ) : 'error',
-            ( 'char' , 'float' , '>=' ) : 'error',
-            ( 'char' , 'float' , '!=' ) : 'error',
-            ( 'char' , 'float' , '||' ) : 'error',
-            ( 'char' , 'float' , '&&' ) : 'error',
-
-            ( 'char' , 'bool' , '+' ) : 'error',
-            ( 'char' , 'bool' , '-' ) : 'error',
-            ( 'char' , 'bool' , '*' ) : 'error',
-            ( 'char' , 'bool' , '/' ) : 'error',
-            ( 'char' , 'bool' , '=' ) : 'error',
-            ( 'char' , 'bool' , '==' ) : 'error',
-            ( 'char' , 'bool' , '<' ) : 'error',
-            ( 'char' , 'bool' , '>' ) : 'error',
-            ( 'char' , 'bool' , '<=' ) : 'error',
-            ( 'char' , 'bool' , '>=' ) : 'error',
-            ( 'char' , 'bool' , '!=' ) : 'error',
-            ( 'char' , 'bool' , '||' ) : 'error',
-            ( 'char' , 'bool' , '&&' ) : 'error',
-
-            ( 'char' , 'char' , '+' ) : 'char',
-            ( 'char' , 'char' , '-' ) : 'char',
-            ( 'char' , 'char' , '*' ) : 'error',
-            ( 'char' , 'char' , '/' ) : 'error',
-            ( 'char' , 'char' , '=' ) : 'char',
-            ( 'char' , 'char' , '==' ) : 'bool',
-            ( 'char' , 'char' , '<' ) : 'bool',
-            ( 'char' , 'char' , '>' ) : 'bool',
-            ( 'char' , 'char' , '<=' ) : 'bool',
-            ( 'char' , 'char' , '>=' ) : 'bool',
-            ( 'char' , 'char' , '!=' ) : 'bool',
-            ( 'char' , 'char' , '||' ) : 'error',
-            ( 'char' , 'char' , '&&' ) : 'error',
-
-            ('read', 'int', '') : 'char', 
-            ('read', 'float', '') : 'char',
-            ('read', 'bool', '') : 'char',
-            ('read', 'char', '') : 'char',
-
-            ('print', 'int', '') : 'char',
-            ('print', 'float', '') : 'char',
-            ('print', 'bool', '') : 'char',
-            ('print', 'char', '') : 'char'
-
+            ('print', 'int', '') : 'string',
+            ('print', 'float', '') : 'string',
+            ('print', 'bool', '') : 'string',
+            ('print', 'string', '') : 'string'
 
         }
 

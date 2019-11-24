@@ -22,6 +22,7 @@ Pilas para la generacion de cuadruplos
 '''
 pOperandos = [] # pila que almacena operandos de la expresion
 pOperadores = [] # pila que almacena operadores de la expresion
+pMemorias = [] #pila que almacena las direcciones de memoria de la expresion
 pTipos = [] # pila que almacena los tipos de los operandos de la expresion
 pSaltos = [] # pila que almacena los indices de saltos para condiciones y ciclos
 pFunciones = [] # pila que almacena los indices de ubicacion de las funciones del programa
@@ -86,6 +87,11 @@ def popOperadores():
     global pOperadores
     return pOperadores.pop()
 
+#
+def popMemorias():
+    global pMemorias
+    return pMemorias.pop()
+
 #Toma el ultimo elemento de Pila de Tipos
 def popTipos():
     global pTipos
@@ -110,6 +116,11 @@ def pushOperando(operando):
 def pushOperador(operador):
     global pOperadores
     pOperadores.append(operador)
+
+#Simula push stack para anadir nueva posicion de memoria
+def pushMemoria(memoria):
+    global pMemorias
+    pMemorias.append(memoria)
 
 #Simula push stack para anadir nuevo tipo
 def pushTipo(tipo):
@@ -148,7 +159,7 @@ def nextQuad():
     return len(arregloQuads)
 
 '''
-Manejo de memoria para la funcion nextAvail: toma el siguiente temporal en
+Manejo de memoria para la funcion nextTemporalAvail: toma el siguiente temporal en
 la pila para la generacion de cuadruplos
 '''
 
@@ -196,70 +207,137 @@ Espacios de memoria:
 index_intGlobales = BATCH_SIZE
 index_floatGlobales = index_intGlobales + BATCH_SIZE
 index_boolGlobales = index_floatGlobales + BATCH_SIZE
+
 index_intLocales = index_boolGlobales + BATCH_SIZE
 index_floatLocales = index_intLocales + BATCH_SIZE
 index_boolLocales = index_floatLocales + BATCH_SIZE
+
 index_intTemporales = index_boolLocales + BATCH_SIZE
 index_floatTemporales = index_intTemporales + BATCH_SIZE
 index_boolTemporales = index_floatTemporales + BATCH_SIZE
+
 index_intConstantes = index_boolTemporales + BATCH_SIZE
 index_floatConstantes = index_intConstantes + BATCH_SIZE
 index_stringConstantes = index_floatConstantes + BATCH_SIZE
 
-#Declaracion de inicio de index de memoria para temporales
-cont_IntTemp = index_boolLocales
-cont_FloatTemp = index_intTemporales
-cont_BoolTemp = index_floatTemporales
-
 '''
 Variables para manejar cambios de contexto
 '''
-memoriaGlobal = [0, index_intGlobales, index_floatGlobales, index_boolGlobales] #valores actuales para cada tipo de dato global
+#Declaracion de inicio de index de memoria para globales
+cont_IntGlobal = 0
+cont_FloatGlobal = index_intGlobales
+cont_BoolGlobal  = index_floatGlobales
 
-memoriaLocal = [0, index_intLocales, index_floatLocales, index_boolLocales] #valores actuales para cada tipo de dato local
+#Declaracion de inicio de index de memoria para locales
+cont_IntLocal = index_boolGlobales
+cont_FloatLocal = index_intLocales
+cont_BoolLocal = index_floatLocales
+
+'''
+Obtiene el siguiente espacio de memoria disponible para una variable local o global
+nextMemoryAvail
+'''
+def nextMemoryAvail(scope, tipo):
+    global cont_IntGlobal
+    global cont_FloatGlobal
+    global cont_BoolGlobal
+    global cont_IntLocal
+    global cont_FloatLocal
+    global cont_BoolLocal
+
+    memPos = -1
+
+    #Obtener memoria para una global
+    if scope == GLOBAL_CONTEXT:
+        if tipo == 'int':
+            if cont_IntGlobal < index_intGlobales:
+                memPos = cont_IntGlobal
+                cont_IntGlobal += 1
+            else:
+                printErrorOutOfBounds('globales','Enteras')
+        elif tipo == 'float':
+            if cont_FloatGlobal < index_floatGlobales:
+                memPos = cont_FloatGlobal
+                cont_FloatGlobal +=  1
+            else:
+                printErrorOutOfBounds('globales','Flotantes')
+        elif tipo == 'bool':
+            if cont_BoolGlobal < index_boolGlobales:
+                memPos = cont_BoolGlobal
+                cont_BoolGlobal +=  1
+            else:
+                printErrorOutOfBounds('globales','Booleanas')
+    #OBtener memoria para una variable local
+    else:
+        if tipo == 'int':
+            if cont_IntLocal < index_intLocales:
+                memPos = cont_IntLocal
+                cont_IntLocal += 1
+            else:
+                printErrorOutOfBounds('locales','Enteras')
+        elif tipo == 'float':
+            if cont_FloatLocal < index_floatLocales:
+                memPos = cont_FloatLocal
+                cont_FloatLocal +=  1
+            else:
+                printErrorOutOfBounds('locales','Flotantes')
+        elif tipo == 'bool':
+            if cont_BoolLocal < index_boolLocales:
+                memPos = cont_BoolLocal
+                cont_BoolLocal +=  1
+            else:
+                printErrorOutOfBounds('locales','Booleanas')
+    return memPos
 
 '''
 Modificador de memoria para el manejo de arreglos
 updateMemoryPointer(scope de la declaracion del arreglo, tipo del arreglo, cantidad de valores en el arreglo)
 '''
 def updateMemoryPointer(scope, tipo, cont):
-    global memoriaGlobal
-    global memoriaLocal
+    global cont_IntGlobal
+    global cont_FloatGlobal
+    global cont_BoolGlobal
+    global cont_IntLocal
+    global cont_FloatLocal
+    global cont_BoolLocal
 
-    if scope == 'globals':
+    if scope == GLOBAL_CONTEXT:
         if tipo == 'int':
-            memoriaGlobal[0] += cont
-            if memoriaGlobal[0] > index_intGlobales:
+            cont_IntGlobal += cont
+            if cont_IntGlobal > index_intGlobales:
                 print ('Overflow int globales')
         if tipo == 'float':
-            memoriaGlobal[1] += cont
-            if memoriaGlobal[1] > index_floatGlobales:
+            cont_FloatGlobal += cont
+            if cont_FloatGlobal > index_floatGlobales:
                 print('Overflow float globales')
         if tipo == 'bool':
-            memoriaGlobal[2] += cont
-            if memoriaGlobal[2] > index_boolGlobales:
+            cont_BoolGlobal += cont
+            if cont_BoolGlobal > index_boolGlobales:
                 print('Overflow bool globales')
     else:
         if tipo == 'int':
-            memoriaLocal[0] += cont
-            if memoriaLocal[0] > index_intLocales:
+            cont_IntLocal += cont
+            if cont_IntLocal > index_intLocales:
                 print('Overflow int locales')
         if tipo == 'float':
-            memoriaLocal[1] += cont
-            if memoriaLocal[1] > index_floatLocales:
+            cont_FloatLocal += cont
+            if cont_FloatLocal > index_floatLocales:
                 print('Overflow float locales')
         if tipo == 'bool':
-            memoriaLocal[2] += cont
-            if memoriaLocal[2] > index_boolLocales:
+            cont_BoolLocal += cont
+            if cont_BoolLocal > index_boolLocales:
                 print('Overflow bool locales')
 
+#Declaracion de inicio de index de memoria para temporales
+cont_IntTemp = index_boolLocales
+cont_FloatTemp = index_intTemporales
+cont_BoolTemp = index_floatTemporales
 
 #Obtiene el siguiente temporal de la pila simulada de temporales
-def nextAvail(tipo):
+def nextTemporalAvail(tipo):
     global cont_IntTemp
     global cont_FloatTemp
     global cont_BoolTemp
-    global cont_CharTemp
 
     if tipo == 'int':
         if cont_IntTemp < index_intTemporales:
@@ -313,6 +391,7 @@ def pushConstant(constante):
             else:
                 printErrorOutOfBounds('constantes','Enteras')
         pushOperando(dict_Int[constante])
+        pushMemoria(dict_Int[constante])
         pushTipo('int')
 
     elif type(constante) == float:
@@ -324,11 +403,13 @@ def pushConstant(constante):
             else:
                 printErrorOutOfBounds('constantes','Flotantes')
         pushOperando(dict_Float[constante])
+        pushMemoria(dict_Float[constante])
         pushTipo('float')
 
     elif type(constante) == str:
         if constante == 'true' or constante == 'false':
             pushOperando(constante)
+            pushMemoria(index_stringConstantes)
             pushTipo('bool')
         else:
             if constante not in dict_String:
@@ -339,6 +420,7 @@ def pushConstant(constante):
                 else:
                     printErrorOutOfBounds('constantes','Strings')
             pushOperando(dict_String[constante])
+            pushMemoria(dict_String[constante])
             pushTipo('string')
 
     else:
@@ -1000,17 +1082,31 @@ def p_pnQuadGenExp1(p):
     global pOperandos
     global pTipos
     varId = p[-1]
+
     #Buscar el tipo de la variable en su contexto, sino la encuentra buscar en globales
     varTipo = dirFunciones.search_varType(currentFunction, varId)
     if not varTipo:
         varTipo = dirFunciones.search_varType(GLOBAL_CONTEXT, varId)
     #Si tampoco se encuentra en el contexto global, no existe la variable
     if not varTipo:
-        print("Error: Variable ", varId , " no declarada.")
+        print("Error: Variable ", varId , " no declarada. 1")
         sys.exit("Error: Variable {} no declarada.".format(varId))
         #TODO: Deberiamos handlear el hecho de que no este declarada y no tronar el sistema
         return
+
+    #Buscar la direccion de la memoria en su contexto, sino la encuentra buscar en globales
+    varMemPos = dirFunciones.search_memPos(currentFunction, varId)
+    if not varMemPos:
+        varMemPos = dirFunciones.search_memPos(GLOBAL_CONTEXT, varId)
+    #Si tampoco se encuentra en el contexto global, no existe la variable
+    if varMemPos < 0:
+        print("Error: Variable ", varId , " no declarada. :", varMemPos)
+        sys.exit("Error: Variable {} no declarada.".format(varId))
+        #TODO: Deberiamos handlear el hecho de que no este declarada y no tronar el sistema
+        return
+
     pushOperando(varId)
+    pushMemoria(varMemPos)
     pushTipo(varTipo)
     print("pnQuadGenExp1 poperando: ", pOperandos)
     print("pnQuadGenExp1 ptipos: ", pTipos)
@@ -1054,8 +1150,10 @@ def p_pnQuadGenExp4(p):
     if topOperador() in OPERADORES_SUMARESTA:
         quad_rightOper = popOperandos()
         quad_rightType = popTipos()
+        quad_rightMem = popMemorias()
         quad_leftOper = popOperandos()
         quad_leftType = popTipos()
+        quad_leftMem = popMemorias()
         quad_operator = popOperadores()
         global operValida
         quad_resultType = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
@@ -1064,9 +1162,10 @@ def p_pnQuadGenExp4(p):
             printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
         else:
             #quad_result = direccion de memoria donde se guardara el tipo de dato
-            quad_resultIndex = nextAvail(quad_resultType)
-            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_resultIndex)
+            quad_resultIndex = nextTemporalAvail(quad_resultType)
+            printAuxQuad(quad_operator, quad_leftMem, quad_rightMem, quad_resultIndex)
             pushOperando(quad_resultIndex)
+            pushMemoria(quad_resultIndex)
             pushTipo(quad_resultType)
 
 '''
@@ -1080,8 +1179,10 @@ def p_pnQuadGenExp5(p):
     if topOperador() in OPERADORES_MULTDIV:
         quad_rightOper = popOperandos()
         quad_rightType = popTipos()
+        quad_rightMem = popMemorias()
         quad_leftOper = popOperandos()
         quad_leftType = popTipos()
+        quad_leftMem = popMemorias()
         quad_operator = popOperadores()
         global operValida
         quad_resultType = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
@@ -1090,9 +1191,10 @@ def p_pnQuadGenExp5(p):
             printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
         else:
             #quad_result = direccion de memoria donde se guardara el tipo de dato
-            quad_resultIndex = nextAvail(quad_resultType)
-            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_resultIndex)
+            quad_resultIndex = nextTemporalAvail(quad_resultType)
+            printAuxQuad(quad_operator, quad_leftMem, quad_rightMem, quad_resultIndex)
             pushOperando(quad_resultIndex)
+            pushMemoria(quad_resultIndex)
             pushTipo(quad_resultType)
 
 '''
@@ -1138,8 +1240,10 @@ def p_pnQuadGenExp9(p):
     if topOperador() in OPERADORES_RELACIONALES:
         quad_rightOper = popOperandos()
         quad_rightType = popTipos()
+        quad_leftMem = popMemorias()
         quad_leftOper = popOperandos()
         quad_leftType = popTipos()
+        quad_leftMem = popMemorias()
         quad_operator = popOperadores()
         global operValida
         quad_resultType = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
@@ -1148,9 +1252,10 @@ def p_pnQuadGenExp9(p):
             printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
         else:
             #quad_result = direccion de memoria donde se guardara el tipo de dato
-            quad_resultIndex = nextAvail(quad_resultType)
-            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_resultIndex)
+            quad_resultIndex = nextTemporalAvail(quad_resultType)
+            printAuxQuad(quad_operator, quad_leftMem, quad_rightMem, quad_resultIndex)
             pushOperando(quad_resultIndex)
+            pushMemoria(quad_resultIndex)
             pushTipo(quad_resultType)
 
 '''
@@ -1178,8 +1283,10 @@ def p_pnQuadGenExp11(p):
     if topOperador() in OPERADORES_LOGICOS:
         quad_rightOper = popOperandos()
         quad_rightType = popTipos()
+        quad_rightMem = popMemorias()
         quad_leftOper = popOperandos()
         quad_leftType = popTipos()
+        quad_leftMem = popMemorias()
         quad_operator = popOperadores()
         global operValida
         quad_resultType = operValida.get_tipo(quad_leftType, quad_rightType, quad_operator)
@@ -1188,9 +1295,10 @@ def p_pnQuadGenExp11(p):
             printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
         else:
             #quad_result = direccion de memoria donde se guardara el tipo de dato
-            quad_resultIndex = nextAvail(quad_resultType)
-            printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_resultIndex)
+            quad_resultIndex = nextTemporalAvail(quad_resultType)
+            printAuxQuad(quad_operator, quad_leftMem, quad_rightMem, quad_resultIndex)
             pushOperando(quad_resultIndex)
+            pushMemoria(quad_resultIndex)
             pushTipo(quad_resultType)
 
 '''
@@ -1217,8 +1325,10 @@ def p_pnQuadGenSec2(p):
     if topOperador() in OPERADOR_ASIGNACION:
         quad_rightOper = popOperandos() #Que le voy a asignar
         quad_rightType = popTipos()
+        quad_rightMem = popMemorias()
         quad_leftOper = popOperandos() #A quien se lo voy a asignar
         quad_leftType = popTipos()
+        quad_leftMem = popMemorias()
         quad_operator = popOperadores()
         global operValida
         global dirFunciones
@@ -1229,7 +1339,7 @@ def p_pnQuadGenSec2(p):
                 printErrorOperacionInvalida(quad_rightOper, quad_rightType, quad_leftOper, quad_leftType, quad_operator)
             else:
                 #quad_result = direccion de memoria donde se guardara el tipo de dato
-                printAuxQuad(quad_operator, quad_rightOper, '', quad_leftOper)
+                printAuxQuad(quad_operator, quad_rightMem, '', quad_leftMem)
         else:
             print("Error: Intenando asignar a una no variable, de tipo: ", quad_leftType)
 
@@ -1258,6 +1368,7 @@ def p_pnQuadGenSec4(p):
     if topOperador() in OPERADOR_SECUENCIAL:
         quad_rightOper = popOperandos() #hace pop de read/write
         quad_rightType = popTipos()
+        quad_rightMem = popMemorias()
         quad_operator = popOperadores()
         global operValida
         quad_resultType = operValida.get_tipo(quad_operator, quad_rightType, '')
@@ -1265,8 +1376,9 @@ def p_pnQuadGenSec4(p):
         if quad_resultType == 'error':
             printErrorOperacionInvalida(quad_rightOper, quad_rightType, '', '', quad_operator)
         else:
-            printAuxQuad(quad_operator, quad_rightOper, '', quad_operator)
+            printAuxQuad(quad_operator, quad_rightMem, '', quad_operator)
             pushOperando(quad_rightOper)
+            pushMemoria(quad_rightOper)
             pushTipo(quad_resultType)
 '''
 Genera el cuadruplo GOTOF para la condicion IF despues de recibir la expresion boleana a evaluar
@@ -1275,6 +1387,7 @@ def p_pnQuadGenCond1(p):
     '''
     pnQuadGenCond1 :
     '''
+    quad_memPos = popMemorias()
     quad_resultType = popTipos()
     if quad_resultType == 'error':
         printTypeMismatch()
@@ -1327,6 +1440,7 @@ def p_pnQuadGenCycle2(p):
     '''
     pnQuadGenCycle2 :
     '''
+    quad_memPos = popMemorias()
     quad_resultType = popTipos()
     if quad_resultType == 'error':
         printTypeMismatch()
@@ -1363,11 +1477,15 @@ def p_pnVarSimple(p):
     global currentContVars
     print("tipo: ", p[-2])
     print("nombre: ", p[-1])
+    #Obtener el siguiente apuntador de memoria donde guardar esa madre
+    #si lees esto elda tqm
+    memPos = nextMemoryAvail(currentFunction, varTipo)
     #Agregar variable simple a directorio de funciones en current function
-    dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0)
+    dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0, memPos)
     #Agregar variable y su tipo a la pila por si se llega a utilizar
     pushTipo(varTipo)
     pushOperando(varId)
+    pushMemoria(memPos)
     currentContVars = currentContVars + 1 #Incrementa el contador de variables
 
 '''
@@ -1379,6 +1497,7 @@ def p_pnVarSimple2(p):
     '''
     varTipo = popTipos()
     varId = popOperandos()
+    varMem = popMemorias()
 
 '''
 Puntos neuralgicos para recepcion de constantes y meter su valor en pila de operandos
@@ -1462,8 +1581,11 @@ def p_pnTipoIdParam(p):
     global currentContParameters
     currentContParameters += 1
     #Agregar cada parametro como variable dentro de la tabla de variables de la funcion
+    varTipo = p[-2]
+    varId = p[-1]
+    memPos = nextMemoryAvail(currentFunction, varTipo)
     #Se agrega en el contexto local, con el tipo y id definidos, y siendo no dimensionada
-    dirFunciones.add_varToFunction(currentFunction, p[-1], p[-2], 0, 0)
+    dirFunciones.add_varToFunction(currentFunction, varId, varTipo, 0, 0, memPos)
 
 #Funcion para actualizar el numero de parametros de una funcion ya definida
 def p_pnInsertParams(p):
@@ -1481,9 +1603,23 @@ def p_pnEndProc(p):
     '''
     pnEndProc :
     '''
-    global memoriaLocal
     global retornoFlag
-    memoriaLocal = [0, index_intLocales, index_floatLocales, index_boolLocales] #resetea la memoria local
+
+    #Reset de apuntadores de memoria local
+    global cont_IntLocal
+    global cont_FloatLocal
+    global cont_BoolLocal
+    cont_IntLocal = index_boolGlobales
+    cont_FloatLocal = index_intLocales
+    cont_BoolLocal = index_floatLocales
+    #Reset de apuntadores de memoria temporal
+    global cont_IntTemp
+    global cont_FloatTemp
+    global cont_BoolTemp
+    cont_IntTemp = index_boolLocales
+    cont_FloatTemp = index_intTemporales
+    cont_BoolTemp = index_floatTemporales
+
     printAuxQuad('ENDPROC', '', '', '')
     retornoFlag = False
 
@@ -1520,9 +1656,9 @@ def p_pnAgregaParam(p):
     # 3. Obtain Argument and ArgumentType
     argument = popOperandos()
     argumentType = popTipos()
+    argumentMem = popMemorias()
     function = pFunciones.pop()
     args = pArgumentos.pop() + 1
-
     pArgumentos.append(args)
     param = 'param' + str(args)
     #print(param)
@@ -1530,22 +1666,14 @@ def p_pnAgregaParam(p):
     functionParams = dirFunciones.diccionario[function]['cantParametros'] #toma la cantidad de parametros de la funcion referenciada
     print(functionParams)
     lista = dirFunciones.listTypes(function)
-    #tipos = list(dirFunciones.diccionario[function]['tipo'].values()) # obtiene todos los tipos
-    #print("LISTA", lista)
-    #print(args)
     if functionParams >= args:
-        # 3. Verify Argument Type against current Parameter (#k) in Parameter Table
-        #aux1 = lista[args-1]
-        #aux2 = argumentType
-        #print(aux1, aux2)
         if lista[args-1] == argumentType:
-            printAuxQuad('PARAMETER', argument, '', param)
+            printAuxQuad('PARAMETER', argumentMem, '', param)
         else:
             print("Error, los parametros no coinciden")
     else:
         print("Error, demasiados argumentos")
         sys.exit()
-
 
     pFunciones.append(function)
 
@@ -1584,9 +1712,10 @@ def p_pnQuadRetorno(p):
     else: #si si tengo que regresar algo
         operandoRet = popOperandos()
         tipoRet = popTipos()
+        memRet = popMemorias()
         #si los tipos son correctos se crea el cuadruplo con el operando regresado
         if dirFunciones.diccionario[currentFunction]['tipo'] == tipoRet:
-            printAuxQuad('RETURN', '', '', operandoRet)
+            printAuxQuad('RETURN', '', '', memRet)
         else:
             #Si no es correcto los tipos, se genera un error
             printReturnError()
@@ -1610,14 +1739,16 @@ def p_pnValidateParam(p):
     specialFunction = popOperadores()
     param = popOperandos()
     tipoParam = popTipos()
+    memParam = popMemorias()
     tipoFunction = funcValida.get_tipo(specialFunction, tipoParam, '') #revisa en el cubo semantico
-    resultTemporal = nextAvail(tipoFunction)
+    resultTemporal = nextTemporalAvail(tipoFunction)
     if tipoFunction == 'error':
         printTypeMismatch()
     else:
         pushTipo(tipoFunction) #guarda el tipo de resultado de la funcion especial
         pushOperando(resultTemporal)
-        printAuxQuad(specialFunction, param, '', resultTemporal)
+        pushMemoria(resultTemporal)
+        printAuxQuad(specialFunction, memParam, '', resultTemporal)
 
 #Valida una funcion de un solo parametro de entrada, este parametro es de tipo ID
 def p_pnValidateId(p):
@@ -1636,7 +1767,7 @@ lexer = lex.lex()
 '''
 Para probar el parser desde archivo
 '''
-name = './test_files/test2.txt'
+name = './test_files/test1.txt'
 
 with open(name, 'r') as archive:
     s = archive.read()
