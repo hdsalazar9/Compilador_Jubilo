@@ -1,8 +1,5 @@
 program velocirraptor:
 
-	int enterote = 2
-	float flotante = 3.865
-
 func int funciontonta(int a, int b){
 	float res;
 	res = a - b;
@@ -10,5 +7,11 @@ func int funciontonta(int a, int b){
 }
 
 void main(){
-	functiontonta(int enterote, float flotante)
+	int x[10];
+	int y = 10;
+	int z[3] = [7, 12, 19];
+	int hector[2][4];
+	int melanie = 7;
+	int c[2][4] = [[2, 2],[4,6],[8,1],[5,3]];
+	int d = 5;
 }

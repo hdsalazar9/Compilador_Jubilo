@@ -57,21 +57,22 @@ OPERADOR_SECUENCIAL = ['read', 'print']
 Variables para validacion de funciones
 '''
 currentFunction = GLOBAL_CONTEXT # string nombre de funcion actual
+currentVar = '' #string para obtener mediante id el nombre de la variable actual
 currentFunctionType = "void";
 negativeConstant = False
 currentContParameters = 0 #Cantidad de parametros para la funcion actualmente siendo compilada
 currentContVars = 0 #Cantidad de variables para la funcion actualmente siendo compilada
-retornoFlag = False #bandera para detectar cuando una funcion debe o no tener valor de retorno
+flagRetorno = False #bandera para detectar cuando una funcion debe o no tener valor de retorno
 
 '''
 Variables para el manejo de arreglos y matrices
 '''
-reng = 0 #contador para los renglones de una funcion
-col = 0 #contador para las columnas de una funcion
-R = 1 #ira acumulando valor para ser m0
-base = 0 #guarda la direccion base de una variable dimensionada
-
-
+flagDimensionada = False #Bandera para detecar cuando una variable es dimensionada (arreglo o matriz)
+contRenglones = 0 #contador para los renglones de una funcion
+contColumnas = 0 #contador para las columnas de una funcion
+acumuladoR = 1 #ira acumulando valor para ser m0
+dirBase = 0 #guarda la direccion base de una variable dimensionada (Que es igual al limite inferior)
+currentConsForArray = [] #acumulara las constantes de asignacion para un arreglo
 
 
 '''
@@ -635,7 +636,7 @@ def t_error(t):
 #Declaracion de id programa inicial
 def p_programa(p):
     '''
-    programa : PROGRAM ID COLON vars vars_loop pnGotoMain function main
+    programa : PROGRAM ID COLON vars_loop pnGotoMain function main
     '''
     print("Programa \"", p[2], "\" terminado.")
     printQuadsInFormat()
@@ -658,7 +659,7 @@ def p_vars_predicate(p):
     '''
     vars_predicate : SEMIC pnVarSimple2
                    | vars_assign SEMIC pnQuadGenSec2
-                   | vars_array SEMIC
+                   | vars_array SEMIC pnReclamarMemoriaDim
     '''
 
 #Asignacion de constante a una variable declarada
@@ -670,7 +671,7 @@ def p_vars_assign(p):
 #Creacion de variable de tipo arreglo o matriz
 def p_vars_array(p):
     '''
-    vars_array : LBRACK INT_CTE RBRACK vars_array_predicate
+    vars_array : LBRACK pnDetectDimensionada INT_CTE pnGetColumnas RBRACK vars_array_predicate
     '''
 
 #Predicados posibles para la declaracion de arreglos
@@ -684,20 +685,20 @@ def p_vars_array_predicate(p):
 #Asignacion de [constantes] a un arreglo declarado
 def p_vars_array_assign(p):
     '''
-    vars_array_assign : EQUAL_OP LBRACK constante constante_loop RBRACK
+    vars_array_assign : EQUAL_OP LBRACK constante pnGetConsForArray constante_loop RBRACK pnAssignConsToArray
     '''
 
 #Permite agregar varias constantes a la declaracion del arreglo
 def p_constante_loop(p):
     '''
     constante_loop : empty
-                   | COMMA constante constante_loop
+                   | COMMA constante pnGetConsForArray constante_loop
     '''
 
 #Cuando se tienen dos pares de [] lo convierte en una matriz
 def p_vars_matrix(p):
     '''
-    vars_matrix : LBRACK INT_CTE RBRACK vars_matrix_predicate
+    vars_matrix : LBRACK INT_CTE pnGetRenglones RBRACK vars_matrix_predicate
     '''
 
 #Predicados posibles para la declaracion de matrices
@@ -710,13 +711,13 @@ def p_vars_matrix_predicate(p):
 #Asignacion de variables a la matriz desde declaracion
 def p_vars_matrix_assign(p):
     '''
-    vars_matrix_assign : EQUAL_OP LBRACK array array_loop RBRACK
+    vars_matrix_assign : EQUAL_OP LBRACK array array_loop RBRACK pnAssignConsToMatrix
     '''
 
 #Estructura de un arreglo, con minimo un dato y posibles mas
 def p_array(p):
     '''
-    array : LBRACK constante constante_loop RBRACK
+    array : LBRACK constante pnGetConsForArray constante_loop RBRACK
     '''
 
 #Asignacion de mas de un arreglo a una posible lista de arreglos (matriz)
@@ -1475,6 +1476,7 @@ def p_pnVarSimple(p):
     global currentFunction
     global dirFunciones
     global currentContVars
+    global currentVar
     print("tipo: ", p[-2])
     print("nombre: ", p[-1])
     #Obtener el siguiente apuntador de memoria donde guardar esa madre
@@ -1486,6 +1488,7 @@ def p_pnVarSimple(p):
     pushTipo(varTipo)
     pushOperando(varId)
     pushMemoria(memPos)
+    currentVar = varId
     currentContVars = currentContVars + 1 #Incrementa el contador de variables
 
 '''
@@ -1498,6 +1501,8 @@ def p_pnVarSimple2(p):
     varTipo = popTipos()
     varId = popOperandos()
     varMem = popMemorias()
+    global currentVar
+    currentVar = ''
 
 '''
 Puntos neuralgicos para recepcion de constantes y meter su valor en pila de operandos
@@ -1560,7 +1565,7 @@ def p_pnTipoIdFuncion(p):
     global currentFunctionType
     global currentContVars
     global currentContParameters #Numero de parametros que tendra la funcion
-    global retornoFlag #Bandera para saber si el contexto(funcion) actual ocupa un retorno
+    global flagRetorno #Bandera para saber si el contexto(funcion) actual ocupa un retorno
     currentContParameters = 0 #Se reinician los contadores de parametros y variables para la funcion
     currentContVars = 0
     currentFunction = p[-1] #Current function = id de la funcion que se quiere crear
@@ -1568,9 +1573,9 @@ def p_pnTipoIdFuncion(p):
     dirFunciones.add_function(currentFunction, currentFunctionType, currentContParameters, nextQuad())
     #Checar  si el tipo es VOID o no, para saber si la funcion ocupa un retorno de valor forzoso
     if dirFunciones.diccionario[currentFunction]['tipo'] == 'void':
-        retornoFlag = False;
+        flagRetorno = False;
     else:
-        retornoFlag = True;
+        flagRetorno = True;
 
 #Agrega los tipos y ids de las variables parametros encontradas, luego incrementa el contador de parametros
 def p_pnTipoIdParam(p):
@@ -1603,7 +1608,7 @@ def p_pnEndProc(p):
     '''
     pnEndProc :
     '''
-    global retornoFlag
+    global flagRetorno
 
     #Reset de apuntadores de memoria local
     global cont_IntLocal
@@ -1621,7 +1626,7 @@ def p_pnEndProc(p):
     cont_BoolTemp = index_floatTemporales
 
     printAuxQuad('ENDPROC', '', '', '')
-    retornoFlag = False
+    flagRetorno = False
 
 #Valida que la funcion a llamar exista en el directorio de funciones y genera la accion ERA
 def p_pnQuadEra(p):
@@ -1701,9 +1706,9 @@ def p_pnQuadRetorno(p):
     pnQuadRetorno :
     '''
     global currentFunction
-    global retornoFlag #SAber si tengo que regresar un valor o no
+    global flagRetorno #SAber si tengo que regresar un valor o no
 
-    if not retornoFlag:
+    if not flagRetorno:
         if p[-1] == 'return':
             #Si no tengo regresar nada y no le estoy mandando nada
             printAuxQuad('RETURN', '', '', '')
@@ -1758,7 +1763,169 @@ def p_pnValidateId(p):
     nombreId = str(p[-1])
     specialFunction = popOperadores()
 
-    #pendiente porque esto necesita la implementacion de arreglitos
+#Funcines esperaciales: pendiente porque esto necesita la implementacion de arreglitos
+
+#Funcion para detectar que la variable actual variable es dimensionada
+def p_pnDetectDimensionada(p):
+    '''
+    pnDetectDimensionada :
+    '''
+    global flagDimensionada
+    flagDimensionada = True
+
+#Funcion que recibe el numero de columnas
+def p_pnGetColumnas(p):
+    '''
+    pnGetColumnas :
+    '''
+    global acumuladoR
+    global contColumnas
+    global dirFunciones
+    global currentFunction
+    global currentVar
+    columnas = p[-1]
+    if columnas > 0:
+        acumuladoR = columnas #Equivale a R * (Ls - Li, que es 0)
+        contColumnas = columnas
+        #Actualizar variable y ponerle columnas
+        dirFunciones.update_dimensions(currentFunction, currentVar, 0, columnas)
+    else:
+        #print('ERROR. Index invalido')
+        sys.exit('ERROR. Index invalido, cantidad de columnas debe ser mayor a 0')
+        return
+
+#Funcion que recibe el numero de filas
+def p_pnGetRenglones(p):
+    '''
+    pnGetRenglones :
+    '''
+    global acumuladoR
+    global contRenglones
+    global dirFunciones
+    global currentFunction
+    global currentVar
+    renglones = p[-1]
+    if renglones > 0:
+        acumuladoR = acumuladoR * renglones
+        contRenglones = renglones
+        #Actualizar variable y ponerle renglones
+        dirFunciones.update_dimensions(currentFunction, currentVar, renglones, -1) #Se manda columnas -1 cuando no se actualizan las columnas
+    else:
+        sys.exit('ERROR. Index invalido, cantidad de renglones debe ser mayor a cero.')
+        return
+
+#Funcion que ya ha recibido los renglones y columnas de una variable dimensionada
+#Actualiza R y reclama la memoria necesaria para la variable dimensionada
+def p_pnReclamarMemoriaDim(p):
+    '''
+    pnReclamarMemoriaDim :
+    '''
+    global acumuladoR
+    global dirFunciones
+    global currentFunction
+    global currentVar
+    global flagDimensionada
+    global currentConsForArray
+    cantValores = acumuladoR - 1
+    acumuladoR = 1
+    flagDimensionada = False
+    currentType = dirFunciones.search_varType(currentFunction, currentVar)
+    updateMemoryPointer(currentFunction, currentType, cantValores) #Reclamar memoria para variable dimensionada
+    currentConsForArray = [] #Reiniciar las posibles constantes a asignar
+
+#Funcion que recibe las constantes para una asignacion de arreglo
+def p_pnGetConsForArray(p):
+    '''
+    pnGetConsForArray :
+    '''
+    global currentFunction
+    global currentVar
+    global currentConsForArray
+    consToAdd = p[-1] #popOperando
+    currentType = dirFunciones.search_varType(currentFunction, currentVar) #popType
+    if currentType == 'int' or currentType == 'float':
+        if type(consToAdd) == int or type(consToAdd) == float:
+            currentConsForArray.append(consToAdd)
+        else:
+            printTypeMismatch()
+            return
+    else: #el arreglo es de booleanos, quien hace un arreglo un arreglo de booleanos tho?
+        if type(consToAdd) == 'bool':
+            currentConsForArray.append(consToAdd)
+        else:
+            printTypeMismatch()
+            sys.exit()
+            return
+
+#Funcion que asigna los espacios de memoria para cada constante de un arreglo que fue asignado
+def p_pnAssignConsToArray(p):
+    '''
+    pnAssignConsToArray :
+    '''
+    global currentFunction
+    global currentVar
+    global currentConsForArray
+    global contColumnas
+    #Si tengo el mismo numero de constantes a asignar, que el numero de columnas, las asigno
+    if len(currentConsForArray) == contColumnas:
+        memInicial = dirFunciones.search_memPos(currentFunction, currentVar)
+        auxConsType = []
+        auxConsId = []
+        auxConsMem = []
+        for index in range(contColumnas):
+            auxConsType.append(popTipos())
+            auxConsId.append(popOperandos())
+            auxConsMem.append(popMemorias())
+
+        for index in range(contColumnas):
+            auxCons = auxConsMem.pop()
+            auxMem = memInicial + index
+            printAuxQuad('=', auxCons, '', auxMem) #Quadruplo para asignar los valores
+    elif len(currentConsForArray) < contColumnas:
+        print ('Error. No hay suficientes constantes para asignarse al arreglo {}, se tienen {}, se ocupan {}.'.format(currentVar, len(currentConsForArray), contColumnas))
+        sys.exit()
+        return
+    elif len(currentConsForArray) > contColumnas:
+        print('Error. Demasiadas constantes {} para asignarse al arreglo {} de tamano {}.'.format(len(currentConsForArray), currentVar, contColumnas))
+        sys.exit()
+        return
+
+#Funcion que asigna los espacios de memoria para cada constante de una matriz que fue asignado
+def p_pnAssignConsToMatrix(p):
+    '''
+    pnAssignConsToMatrix :
+    '''
+    global currentFunction
+    global currentVar
+    global currentConsForArray
+    global contColumnas
+    global contRenglones
+    cantCasillas = contColumnas * contRenglones #Cantidad de casillas que tengo que asignar
+
+    if len(currentConsForArray) == cantCasillas:
+        memInicial = dirFunciones.search_memPos(currentFunction, currentVar)
+        auxConsType = []
+        auxConsId = []
+        auxConsMem = []
+        for index in range(cantCasillas):
+            auxConsType.append(popTipos())
+            auxConsId.append(popOperandos())
+            auxConsMem.append(popMemorias())
+
+        for index in range(cantCasillas):
+            consMem = auxConsMem.pop()
+            auxMem = memInicial + index
+            printAuxQuad('=', consMem, '', auxMem) #Quadruplo para asignar los valores
+    elif len(currentConsForArray) < cantCasillas:
+        print ('Error. No hay suficientes constantes para asignarse a la matriz {}, se tienen {}, se ocupan {}.'.format(currentVar, len(currentConsForArray), cantCasillas))
+        sys.exit()
+        return
+    elif len(currentConsForArray) > cantCasillas:
+        print('Error. Demasiadas constantes {} para asignarse a la matriz {} de tamano {}.'.format(len(currentConsForArray), currentVar, cantCasillas))
+        sys.exit()
+        return
+
+
 
 #Defining Lexer & Parser
 parser = yacc.yacc()
@@ -1767,7 +1934,7 @@ lexer = lex.lex()
 '''
 Para probar el parser desde archivo
 '''
-name = './test_files/test1.txt'
+name = './test_files/test3.txt'
 
 with open(name, 'r') as archive:
     s = archive.read()

@@ -90,7 +90,10 @@ class Jubilo_DirFunc:
     '''
     def update_dimensions(self, nombre, nombreVar, renglones, columnas):
         if self.diccionario[nombre]['variables'].exist_var(nombreVar):
-            return self.diccionario[nombre]['variables'].update_varDimensions(nombreVar, renglones, columnas)
+            if columnas > 0: #Se manda columnas > 0 cuando se van a actualizar columnas
+                return self.diccionario[nombre]['variables'].update_varDimensions(nombreVar, renglones, columnas)
+            else: #Se manda columnas -1 cuando se actualizan rengloens
+                return self.diccionario[nombre]['variables'].update_varDimensions(nombreVar, renglones, -1)
         else:
             print("Warning: Variable ", nombreVar, "no existe en este contexto ", nombre)
             return None
