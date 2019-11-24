@@ -854,13 +854,13 @@ def p_asignacion(p):
 def p_asignacion_predicate(p):
     '''
     asignacion_predicate : empty
-                         | LBRACK full_exp RBRACK asignacion_array_predicate
+                         | LBRACK pnQuadExp6 full_exp RBRACK pnQuadExp7 asignacion_array_predicate
     '''
 
 def p_asignacion_array_predicate(p):
     '''
-    asignacion_array_predicate : empty
-                               | LBRACK full_exp RBRACK
+    asignacion_array_predicate : empty pnAccessArray
+                               | LBRACK pnQuadExp6 full_exp RBRACK pnQuadExp7 pnAccessMatrix
     '''
 
 def p_condicion(p):
@@ -1082,6 +1082,8 @@ def p_pnQuadGenExp1(p):
     global dirFunciones
     global pOperandos
     global pTipos
+    global flagDimensionada
+    global currentVar
     varId = p[-1]
 
     #Buscar el tipo de la variable en su contexto, sino la encuentra buscar en globales
@@ -1101,6 +1103,23 @@ def p_pnQuadGenExp1(p):
         varMemPos = dirFunciones.search_memPos(GLOBAL_CONTEXT, varId)
     #Si tampoco se encuentra en el contexto global, no existe la variable
     if varMemPos < 0:
+        print("Error: Variable ", varId , " no declarada. :", varMemPos)
+        sys.exit("Error: Variable {} no declarada.".format(varId))
+        #TODO: Deberiamos handlear el hecho de que no este declarada y no tronar el sistema
+        return
+
+    #Calcular si la variable es dimensionada
+    isDimensionada = dirFunciones.isVarDimensionada(currentFunction, varId)
+    if isDimensionada == -1: #No esta en ese contexto, buscar en globales
+        isDimensionada = dirFunciones.isVarDimensionada(GLOBAL_CONTEXT, varId)
+
+    if isDimensionada == 1:
+        flagDimensionada = True
+        currentVar = varId
+    elif isDimensionada == 0:
+        flagDimensionada = False
+    else:
+        flagDimensionada = False
         print("Error: Variable ", varId , " no declarada. :", varMemPos)
         sys.exit("Error: Variable {} no declarada.".format(varId))
         #TODO: Deberiamos handlear el hecho de que no este declarada y no tronar el sistema
@@ -1925,6 +1944,63 @@ def p_pnAssignConsToMatrix(p):
         sys.exit()
         return
 
+#Funcion para accesar a un indice de un arreglo
+def p_pnAccessArray(p):
+    '''
+    pnAccessArray :
+    '''
+    global flagDimensionada
+    global currentFunction
+    global currentVar
+    auxId = popOperandos() #Id de la variable que se quiere usar
+    auxMem = popMemorias()
+    auxType = popTipos()
+
+    if flagDimensionada: #Checar que si sea una variable dimensionada
+        #checar que el indice que se quiere acceder resulte en un entero
+        if auxType != 'int': #No resulta en entero
+            print("Error. Se esperaba un entero para acceder en el arreglo {}.".format())
+            sys.exit()
+            return
+        else: #Si resulta en entero, pushear
+            #Obtener memoria base de la variable
+
+            #Calcular memoria del indice
+
+        #Buscar el tipo de la variable en su contexto, sino la encuentra buscar en globales
+        currentVarTipo = dirFunciones.search_varType(currentFunction, currentVar)
+        if not currentVarTipo:
+            currentVarTipo = dirFunciones.search_varType(GLOBAL_CONTEXT, currentVar)
+        #Si tampoco se encuentra en el contexto global, no existe la variable
+        if not currentVarTipo:
+            print("Error: Variable ", varId , " no declarada. 1")
+            sys.exit("Error: Variable {} no declarada.".format(currentVar))
+            #TODO: Deberiamos handlear el hecho de que no este declarada y no tronar el sistema
+            return
+
+        #Obtiene las dimensiones de la variable
+        varDims = dirFunciones.getDimensiones(currentFunction, currentVar)
+        if varDims == -1:
+            varDims = dirFunciones.getDimensiones(GLOBAL_CONTEXT, currentVar)
+            if varDims == -1:
+                print('La variable dimensionada no existe')
+                sys.exit()
+                return
+
+    #TENGO QUE GENERAR UN QUAD CON LOS CURRENT
+
+    else:
+        print('ERROR. No se puede acceder por index a una variable no dimensionada')
+        sys.exit()
+        return
+
+
+#Funcion para accesar a un indice de una matriz
+def p_pnAccessMatrix(p):
+    '''
+    pnAccessMatrix :
+    '''
+    global flagDimensionada
 
 
 #Defining Lexer & Parser

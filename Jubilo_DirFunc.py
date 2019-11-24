@@ -129,6 +129,27 @@ class Jubilo_DirFunc:
     '''
     def exist_var(self, nombre, nombreVar):
         if self.diccionario[nombre]['variables'].exist_var(nombreVar):
-            return True;
+            return True
         else:
-            return False;
+            return False
+    '''
+    Funcion que regresa si la variable nombreVar es dimensionada dentro del contexto
+    '''
+    def isVarDimensionada(self, nombre, nombreVar):
+        if self.diccionario[nombre]['variables'].exist_var(nombreVar):
+            if self.diccionario[nombre]['variables'].diccionario[nombreVar]['columnas'] > 0 or self.diccionario[nombre]['variables'].diccionario[nombreVar]['renglones'] > 0:
+                return 1
+            else:
+                return 0
+        else:
+            return -1
+
+    '''
+    Funcion que regresa un arreglo con las dimensiones de la variable
+    '''
+    def getDimensiones(self, nombre, nombreVar):
+        if self.diccionario[nombre]['variables'].exist_var(nombreVar):
+            dimensiones = list(self.diccionario[nombre]['variables'].diccionario[nombreVar]['columnas'], self.diccionario[nombre]['variables'].diccionario[nombreVar]['renglones'])
+            return dimensiones
+        else:
+            return -1
