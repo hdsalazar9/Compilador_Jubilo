@@ -149,7 +149,7 @@ class Jubilo_DirFunc:
     '''
     def getDimensiones(self, nombre, nombreVar):
         if self.diccionario[nombre]['variables'].exist_var(nombreVar):
-            dimensiones = list(self.diccionario[nombre]['variables'].diccionario[nombreVar]['columnas'], self.diccionario[nombre]['variables'].diccionario[nombreVar]['renglones'])
+            dimensiones = [self.diccionario[nombre]['variables'].diccionario[nombreVar]['columnas'], self.diccionario[nombre]['variables'].diccionario[nombreVar]['renglones']]
             return dimensiones
         else:
             return -1

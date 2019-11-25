@@ -27,7 +27,7 @@ pTipos = [] # pila que almacena los tipos de los operandos de la expresion
 pSaltos = [] # pila que almacena los indices de saltos para condiciones y ciclos
 pFunciones = [] # pila que almacena los indices de ubicacion de las funciones del programa
 pArgumentos = [] # pila que almacena cantidad de argumentos de una funcion
-
+pEspeciales = [] #pila que almacena los identificadores de las funciones especiales usadas en el programa
 '''
 Manejo de cuadruplos
 '''
@@ -391,7 +391,7 @@ def pushConstant(constante):
                 printAuxQuad('addConstant', 'int', constante, dict_Int[constante])
             else:
                 printErrorOutOfBounds('constantes','Enteras')
-        pushOperando(dict_Int[constante])
+        pushOperando(constante)
         pushMemoria(dict_Int[constante])
         pushTipo('int')
 
@@ -403,14 +403,18 @@ def pushConstant(constante):
                 printAuxQuad('addConstant', 'float', constante, dict_Float[constante])
             else:
                 printErrorOutOfBounds('constantes','Flotantes')
-        pushOperando(dict_Float[constante])
+        pushOperando(constante)
         pushMemoria(dict_Float[constante])
         pushTipo('float')
 
     elif type(constante) == str:
-        if constante == 'true' or constante == 'false':
+        if constante == 'true':
             pushOperando(constante)
             pushMemoria(index_stringConstantes)
+            pushTipo('bool')
+        if constante == 'false':
+            pushOperando(constante)
+            pushMemoria(index_stringConstantes + 1)
             pushTipo('bool')
         else:
             if constante not in dict_String:
@@ -420,10 +424,56 @@ def pushConstant(constante):
                     printAuxQuad('addConstant', 'string', constante, dict_String[constante])
                 else:
                     printErrorOutOfBounds('constantes','Strings')
-            pushOperando(dict_String[constante])
+            pushOperando(constante)
             pushMemoria(dict_String[constante])
             pushTipo('string')
+    else:
+        sys.exit("Error: Tipo de variable desconocida.");
 
+'''
+#Obtiene una constante como direccion de memoria, si no esta ya declarada la agrega
+'''
+def asMemConstant(constante):
+    global dict_Int
+    global dict_Float
+    global dict_String
+    global cont_IntConst
+    global cont_FloatConst
+    global cont_StringConst
+    if type(constante) == int:
+        if constante not in dict_Int:
+            if cont_IntConst < index_intConstantes:
+                dict_Int[constante] = cont_IntConst
+                cont_IntConst = cont_IntConst + 1
+                printAuxQuad('addConstant', 'int', constante, dict_Int[constante])
+            else:
+                printErrorOutOfBounds('constantes','Enteras')
+        return(dict_Int[constante])
+
+    elif type(constante) == float:
+        if constante not in dict_Float:
+            if cont_FloatConst < index_floatConstantes:
+                dict_Float[constante] = cont_FloatConst
+                cont_FloatConst = cont_FloatConst + 1
+                printAuxQuad('addConstant', 'float', constante, dict_Float[constante])
+            else:
+                printErrorOutOfBounds('constantes','Flotantes')
+        return(dict_Float[constante])
+
+    elif type(constante) == str:
+        if constante == 'true':
+            return(index_stringConstantes)
+        if constante == 'false':
+            return(index_stringConstantes + 1)
+        else:
+            if constante not in dict_String:
+                if cont_StringConst < index_stringConstantes:
+                    dict_String[constante] = cont_StringConst
+                    cont_StringConst = cont_StringConst + 1
+                    printAuxQuad('addConstant', 'string', constante, dict_String[constante])
+                else:
+                    printErrorOutOfBounds('constantes','Strings')
+            return(dict_String[constante])
     else:
         sys.exit("Error: Tipo de variable desconocida.");
 
@@ -442,6 +492,8 @@ def printErrorOperacionInvalida(rOp, rTy, lOp, lTy, Op):
 
 def printTypeMismatch():
     print('Error: Tipo de dato incorrecto')
+    sys.exit()
+    return
 
 #Regresa un mensaje de error en caso de que el retorno de una funcion sea incorrecto
 def printReturnError():
@@ -455,6 +507,11 @@ def printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result):
 
 #Funcino para desplegar los cuadruplos de manera bonita y con index
 def printQuadsInFormat():
+    #print('##### PILAS AL MOMENTO: #####')
+    #print("operandos: ",pOperandos)
+    #print("pTipos: ",pTipos)
+    #print("pMemorias: ", pMemorias)
+    #print("pOepradres: ",pOperadores)
     print("##### Cuadruplos al momento: #####")
     count = 0
     for quad in arregloQuads:
@@ -476,7 +533,6 @@ tokens = [
     'COVARIANCE','CORRELATION', 'SORT','TRANSPOSE', #funciones especiales
     'READCSV','EXPORTCSV', 'PLOTHIST','PLOTLINE', #funciones especiales
     'EXCHANGE','LINEAREG', 'RANDINT','RANDFLOAT', #funciones especiales
-    'RANDINTMAT','RANDFLOATMAT', #funciones especiales
     'FLOAT_CTE','INT_CTE','BOOL_CTE','CHAR_CTE','STRING_CTE', #constantes
     'NEW_LINE'
 ]
@@ -615,10 +671,6 @@ def t_ID(t):
         t.type = 'RANDINT'
     elif t.value == 'randfloat':
         t.type = 'RANDFLOAT'
-    elif t.value == 'randintmat':
-        t.type = 'RANDINTMAT'
-    elif t.value == 'randfloatmat':
-        t.type = 'RANDFLOATMAT'
     elif t.value == 'return':
         t.type = 'RETURN'
     else:
@@ -813,11 +865,11 @@ def p_estatuto(p):
              | condicion
              | escritura
              | lectura
+             | vars
              | func_call
              | sfunc_call
              | ciclo
              | retorno
-             | vars
     '''
     print("Creado estatuto de:", p[1])
 
@@ -844,6 +896,7 @@ def p_sfunc_call(p):
     '''
     sfunc_call : sfunc SEMIC
     '''
+    p[0] = 'Sfunc'
 
 def p_asignacion(p):
     '''
@@ -854,13 +907,13 @@ def p_asignacion(p):
 def p_asignacion_predicate(p):
     '''
     asignacion_predicate : empty
-                         | LBRACK pnQuadExp6 full_exp RBRACK pnQuadExp7 asignacion_array_predicate
+                         | LBRACK pnDetectDimensionada pnQuadGenExp6 full_exp RBRACK pnQuadGenExp7 asignacion_array_predicate
     '''
 
 def p_asignacion_array_predicate(p):
     '''
     asignacion_array_predicate : empty pnAccessArray
-                               | LBRACK pnQuadExp6 full_exp RBRACK pnQuadExp7 pnAccessMatrix
+                               | LBRACK pnQuadGenExp6 full_exp RBRACK pnQuadGenExp7 pnAccessMatrix
     '''
 
 def p_condicion(p):
@@ -959,7 +1012,7 @@ def p_retorno(p):
 
 def p_var_cte(p):
     '''
-    var_cte : sfunc
+    var_cte : sfunc_operando
             | constante
             | ID pnQuadGenExp1 var_cte_predicate
     '''
@@ -970,53 +1023,51 @@ def p_var_cte_predicate(p):
                       | LPAREN full_exp full_exp_loop RPAREN
     '''
 
+def p_sfunc_operando(p):
+    '''
+    sfunc_operando : FACT npSpecialFunctionId spfunc_params pnValidateFact
+                   | SUM npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+                   | MEAN npSpecialFunctionId LPAREN ID  pnValidateId RPAREN
+                   | MEDIAN npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+                   | MODE npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+                   | STDEV npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+                   | VAR npSpecialFunctionId LPAREN ID pnValidateId RPAREN
+                   | COVARIANCE npSpecialFunctionId LPAREN ID COMMA ID  pnValidateId2 RPAREN
+                   | CORRELATION npSpecialFunctionId LPAREN ID COMMA ID pnValidateId2 RPAREN
+    '''
+
 def p_sfunc(p):
     '''
-    sfunc : ARRANGE npSpecialFunctionId spfunc_two_params
-          | ZEROS npSpecialFunctionId spfunc_params pnValidateParam
-          | ONES npSpecialFunctionId spfunc_params pnValidateParam
-          | SUM npSpecialFunctionId LPAREN ID pnValidateId RPAREN
-          | FACT npSpecialFunctionId spfunc_params pnValidateParam
-          | MEAN npSpecialFunctionId LPAREN ID  pnValidateId RPAREN
-          | MEDIAN npSpecialFunctionId LPAREN ID pnValidateId RPAREN
-          | MODE npSpecialFunctionId LPAREN ID pnValidateId RPAREN
-          | STDEV npSpecialFunctionId LPAREN ID pnValidateId RPAREN
-          | VAR npSpecialFunctionId LPAREN ID pnValidateId RPAREN
-          | SORT npSpecialFunctionId spfunc_params
-          | TRANSPOSE npSpecialFunctionId spfunc_params
-          | READCSV npSpecialFunctionId spfunc_params
-          | PLOTHIST npSpecialFunctionId spfunc_params
-          | COVARIANCE npSpecialFunctionId spfunc_two_params
-          | CORRELATION npSpecialFunctionId spfunc_two_params
+    sfunc : ID MINUS_OP GREAT_LOG pnAddSpecialFunctionVar ARRANGE npSpecialFunctionId LPAREN constante COMMA constante RPAREN pnValidateArrange
+          | ID MINUS_OP GREAT_LOG pnAddSpecialFunctionVar ZEROS npSpecialFunctionId LPAREN INT_CTE RPAREN pnValidateZerosAndOnes
+          | ID MINUS_OP GREAT_LOG pnAddSpecialFunctionVar ONES npSpecialFunctionId LPAREN INT_CTE RPAREN pnValidateZerosAndOnes
+          | ID MINUS_OP GREAT_LOG pnAddSpecialFunctionVar RANDINT npSpecialFunctionId LPAREN constante COMMA constante COMMA INT_CTE RPAREN pnValidateRands
+          | ID MINUS_OP GREAT_LOG pnAddSpecialFunctionVar RANDFLOAT npSpecialFunctionId LPAREN constante COMMA constante COMMA INT_CTE RPAREN pnValidateRands
+
+          | SORT npSpecialFunctionId LPAREN ID pnValidateSort RPAREN
+          | TRANSPOSE npSpecialFunctionId LPAREN ID COMMA ID pnValidateTranspose RPAREN
+
           | EXPORTCSV npSpecialFunctionId spfunc_two_params
+          | PLOTHIST npSpecialFunctionId spfunc_params
           | PLOTLINE npSpecialFunctionId spfunc_two_params
           | EXCHANGE npSpecialFunctionId spfunc_two_params
-          | LINEAREG npSpecialFunctionId spfunc_two_params
-          | RANDINT npSpecialFunctionId spfunc_three_params
-          | RANDFLOAT npSpecialFunctionId spfunc_three_params
-          | RANDINTMAT npSpecialFunctionId spfunc_four_params
-          | RANDFLOATMAT npSpecialFunctionId spfunc_four_params
+          | LINEAREG npSpecialFunctionId LPAREN ID COMMA ID  RPAREN
     '''
 
 def p_spfunc_params(p):
     '''
-    spfunc_params : LPAREN full_exp RPAREN
+    spfunc_params : LPAREN pnQuadGenExp6 full_exp RPAREN pnQuadGenExp7
     '''
 
 def p_spfunc_two_params(p):
     '''
-    spfunc_two_params : LPAREN full_exp COMMA full_exp RPAREN
+    spfunc_two_params : LPAREN pnQuadGenExp6 full_exp COMMA pnQuadGenExp7 pnQuadGenExp6 full_exp RPAREN pnQuadGenExp7
     '''
 
 def p_spfunc_three_params(p):
     '''
     spfunc_three_params : spfunc_two_params
                         | LPAREN full_exp COMMA full_exp COMMA full_exp RPAREN
-    '''
-
-def p_spfunc_four_params(p):
-    '''
-    spfunc_four_params : LPAREN full_exp COMMA full_exp COMMA full_exp COMMA full_exp RPAREN
     '''
 
 def p_empty(p):
@@ -1749,40 +1800,285 @@ def p_npSpecialFunctionId(p):
     '''
     npSpecialFunctionId :
     '''
+    global pEspeciales
     nombreSFunc = str(p[-1])
-    pushOperador(nombreSFunc)
-
+    pEspeciales.append(nombreSFunc)
 
 #Valida una funcion de un solo parametro de entrada, este parametro es de tipo full exp
 #Genera el cuadruplo para realizar la funcion
-def p_pnValidateParam(p):
+def p_pnValidateFact(p):
     '''
-    pnValidateParam :
+    pnValidateFact :
     '''
-    #se usan las pilas de operandos y operadores porque el parametro de la funcion es de tipo full exp
-    specialFunction = popOperadores()
-    param = popOperandos()
-    tipoParam = popTipos()
-    memParam = popMemorias()
+    global funcValida
+    specialFunction = pEspeciales.pop() #obtiene el nombre string de la funcion especial
+    param = popOperandos() #resultado obtenido en FULL_EXP
+    tipoParam = popTipos() #tipo de dato del resultado obtenido en FULL_EXP
+    memParam = popMemorias() #posicion de memoria de lo que se obtuvo en FULL_EXP
+    #VALIDACIONES PARA QUE LA FUNCION PUEDA FUNCIONAR
     tipoFunction = funcValida.get_tipo(specialFunction, tipoParam, '') #revisa en el cubo semantico
-    resultTemporal = nextTemporalAvail(tipoFunction)
-    if tipoFunction == 'error':
+    if tipoFunction == 'error': #la funcion no se puede hacer con el tipo de parametro enviado
         printTypeMismatch()
-    else:
-        pushTipo(tipoFunction) #guarda el tipo de resultado de la funcion especial
-        pushOperando(resultTemporal)
-        pushMemoria(resultTemporal)
+    else: #la funcion es de tipo 'INT' y se procede con la funcion
+        resultTemporal = nextTemporalAvail(tipoFunction)
         printAuxQuad(specialFunction, memParam, '', resultTemporal)
+        pushTipo(tipoFunction) #guarda el tipo de resultado de la funcion especial
+        pushOperando(resultTemporal) #creo que no necesito esto aqui
+        pushMemoria(resultTemporal)
 
-#Valida una funcion de un solo parametro de entrada, este parametro es de tipo ID
+#Valida una funcion de un solo parametro de entrada, este parametro es de tipo ID arreglo
 def p_pnValidateId(p):
     '''
     pnValidateId :
     '''
-    nombreId = str(p[-1])
-    specialFunction = popOperadores()
+    global currentFunction
+    nombreId = str(p[-1]) #nombre de la id
+    specialFunction = pEspeciales.pop() #obtiene el nombre string de la funcion especial
 
-#Funcines esperaciales: pendiente porque esto necesita la implementacion de arreglitos
+    if dirFunciones.exist_var(currentFunction, nombreId):
+        dims = dirFunciones.getDimensiones(currentFunction, nombreId)
+        if (dims[0] == 0 or dims[1] > 0): #toma los casos en los que no es un arreglo o es una matriz
+            print('Error. Se esperaba un parametro de tipo arreglo')
+            sys.exit()
+            return
+        tipoId = dirFunciones.search_varType(currentFunction, nombreId)
+        #en este if ya se sabe que el id es un arreglo y procede a hacer la validacion respecto a la funcion
+        tipoFunction = funcValida.get_tipo(specialFunction, tipoId, '') #revisa en el cubo semantico
+        if tipoFunction == 'error':
+            printTypeMismatch()
+        else:
+            pushTipo(tipoFunction) #guarda el tipo del resultado que se debe obtener con la funcion especiales
+            resultTemporal = nextTemporalAvail(tipoFunction)
+            pushMemoria(resultTemporal)
+            pushOperando(specialFunction)
+            varMemPos = dirFunciones.search_memPos(currentFunction, nombreId)
+            #QUAD(sum, posicion de memoria del argumento array, cantidad de valores en el array, direccion para el resultado de la fx)
+            printAuxQuad(specialFunction, varMemPos, dims[0], resultTemporal)
+    elif dirFunciones.exist_var(GLOBAL_CONTEXT, nombreId):
+        dims = dirFunciones.getDimensiones(GLOBAL_CONTEXT, nombreId)
+        if (dims[0] == 0 or dims[1] > 0): #toma los casos en los que no es un arreglo o es una matriz
+            print('Error. Se esperaba un parametro de tipo arreglo')
+            sys.exit()
+            return
+        tipoId = dirFunciones.search_varType(currentFunction, nombreId)
+        #en este if ya se sabe que el id es un arreglo y procede a hacer la validacion respecto a la funcion
+        tipoFunction = funcValida.get_tipo(GLOBAL_CONTEXT, tipoId, '') #revisa en el cubo semantico
+        if tipoFunction == 'error':
+            printTypeMismatch()
+        else:
+            pushTipo(tipoFunction) #guarda el tipo del resultado que se debe obtener con la funcion especiales
+            resultTemporal = nextTemporalAvail(tipoFunction)
+            pushMemoria(resultTemporal)
+            pushOperando(specialFunction)
+            varMemPos = dirFunciones.search_memPos(GLOBAL_CONTEXT, nombreId)
+            printAuxQuad(specialFunction, varMemPos, dims[0], resultTemporal)
+    else:
+        print('Error. La variable ID = {} no ha sido declarada.'.format(nombreId))
+        sys.exit()
+        return
+
+#Valida los parametros de una funciones especial con dos parametros de entrada
+def p_pnValidateId2(p):
+    '''
+    pnValidateId2 :
+    '''
+    global currentFunction
+    global pEspeciales
+    specialFunction = pEspeciales.pop()
+    nombreX = str(p[-1])
+    nombreY = str(p[-3])
+    #Si exsite X en actual
+    if dirFunciones.exist_var(currentFunction, nombreX):
+        dimsX = dirFunciones.getDimensiones(currentFunction, nombreX)
+        tipoX = dirFunciones.search_varType(currentFunction, nombreX)
+        varMemPosX = dirFunciones.search_memPos(currentFunction, nombreX)
+        #Si existe Y en actual
+        if dirFunciones.exist_var(currentFunction, nombreY):
+            dimsY = dirFunciones.getDimensiones(currentFunction, nombreY)
+            tipoY = dirFunciones.search_varType(currentFunction, nombreY)
+            varMemPosY = dirFunciones.search_memPos(currentFunction, nombreY)
+        #Si no, existe Y en global
+        elif dirFunciones.exist_var(GLOBAL_CONTEXT, nombreY):
+            dimsY = dirFunciones.getDimensiones(GLOBAL_CONTEXT, nombreY)
+            tipoY = dirFunciones.search_varType(GLOBAL_CONTEXT, nombreY)
+            varMemPosY = dirFunciones.search_memPos(GLOBAL_CONTEXT, nombreY)
+        else:
+            print('Error. La variable ID = {} no existe en ninguna parte.'.format(nombreY))
+            sys.exit()
+            return
+    #Si existe X en global
+    elif dirFunciones.exist_var(GLOBAL_CONTEXT, nombreX):
+        dimsX = dirFunciones.getDimensiones(GLOBAL_CONTEXT, nombreX)
+        tipoX = dirFunciones.search_varType(GLOBAL_CONTEXT, nombreX)
+        varMemPosX = dirFunciones.search_memPos(GLOBAL_CONTEXT, nombreX)
+        #Si existe Y en actual
+        if dirFunciones.exist_var(currentFunction, nombreY):
+            dimsY = dirFunciones.getDimensiones(currentFunction, nombreY)
+            tipoY = dirFunciones.search_varType(currentFunction, nombreY)
+            varMemPosY = dirFunciones.search_memPos(currentFunction, nombreY)
+        #Si no, existe Y en global
+        elif dirFunciones.exist_var(GLOBAL_CONTEXT, nombreY):
+            dimsY = dirFunciones.getDimensiones(GLOBAL_CONTEXT, nombreY)
+            tipoY = dirFunciones.search_varType(GLOBAL_CONTEXT, nombreY)
+            varMemPosY = dirFunciones.search_memPos(GLOBAL_CONTEXT, nombreY)
+        else:
+            print('Error. La variable ID = {} no existe en ninguna parte.'.format(nombreY))
+            sys.exit()
+            return
+    else:
+        print('Error. La variable ID = {} no existe en ninguna parte.'.format(nombreX))
+        sys.exit()
+        return
+
+    if (dimsX[0] == 0 or dimsX[1] > 0 or dimsY[0] == 0 or dimsY[1] > 0):
+        print('Error. Se esperaban dos parametros de tipo arreglo')
+        sys.exit()
+        return
+    tipoFunction = funcValida.get_tipo(specialFunction, tipoX, tipoY)
+    if tipoFunction == 'error':
+        printTypeMismatch()
+    else:
+        resultTemporal = nextTemporalAvail(tipoFunction)
+        printAuxQuad(specialFunction, varMemPosY, dimsY[0], '')
+        printAuxQuad(specialFunction, varMemPosX, dimsX[0], resultTemporal)
+        pushOperando(specialFunction)
+        pushMemoria(resultTemporal)
+        pushTipo(tipoFunction)
+
+#Punto neuralgico para el sort de un arreglo, no se crea espacio de memoria pues se modifica el que se manda por param
+def p_pnValidateSort(p):
+    '''
+    pnValidateSort :
+    '''
+    global currentFunction
+    global pEspeciales
+    specialFunction = pEspeciales.pop()
+    currentId = p[-1]
+    auxContext = ''
+    if dirFunciones.exist_var(currentFunction, currentId):
+        auxContext = currentFunction
+    elif dirFunciones.exist_var(GLOBAL_CONTEXT, currentId):
+        auxContext = GLOBAL_CONTEXT
+    else:
+        print('Error. La variable ID = {} no existe en ninguna parte.'.format(nombreX))
+        sys.exit()
+        return
+
+    dimsVar = dirFunciones.getDimensiones(auxContext, currentId)
+    typeVar = dirFunciones.search_varType(auxContext, currentId)
+    memVar = dirFunciones.search_memPos(auxContext, currentId) #Memoria base
+    if (dimsVar[0] == 0 or dimsVar[1] > 0): #Si no es un arreglo, petar
+        print('Error. Se esperaba un parametro de tipo arreglo')
+        sys.exit()
+        return
+    else:
+        tipoFunction = funcValida.get_tipo(specialFunction, typeVar, '')
+        if tipoFunction == 'error':
+            printTypeMismatch()
+        else:
+            #Quad(Sort, de donde empieza el arreglo, cuanto dura el arreglo, donde guardarlo)
+            printAuxQuad(specialFunction, memVar, dimsVar[0], memVar)
+
+#Punto neuralgico para el transpose de una matriz, no crea espacio de memoria pues utiliza la misma memoria donde estaba creado
+def p_pnValidateTranspose(p):
+    '''
+    pnValidateTranspose :
+    '''
+
+#Valida el caso especial de la funcion arrange, cuyos dos Full_EXP deben ser de tipo entero
+def p_pnValidateArrange(p):
+    '''
+    pnValidateArrange :
+    '''
+    global currentFunction
+    global currentVar
+    #global currentType
+    global dirFunciones
+
+    specialFunction = pEspeciales.pop()
+    param2 = popOperandos()
+    param1 = popOperandos()
+    tipoParam2 = popTipos()
+    tipoParam1 = popTipos()
+    memParam2 = popMemorias()
+    memParam1 = popMemorias()
+
+    tipoFunction = funcValida.get_tipo(specialFunction, tipoParam1, tipoParam2) #busca validacion en cubo semantico
+    if tipoFunction == 'error':
+        printTypeMismatch()
+    else:
+        memToReclaim = param2 - param1
+        if memToReclaim > 0:
+            varInitialMemory = nextMemoryAvail(currentFunction, tipoFunction)
+            dirFunciones.add_varToFunction(currentFunction, currentVar, tipoFunction, 0, memToReclaim, varInitialMemory)
+            print(specialFunction, param1, param2)
+            printAuxQuad(specialFunction, memParam1, memParam2, varInitialMemory)
+            #Reclamar memoria para variable dimensionada
+            updateMemoryPointer(currentFunction, tipoFunction, memToReclaim - 1)
+        else:
+            print('Error. El limite superior debe ser mayor al limite inferior')
+    currentVar = ''
+    #currentType = ''
+
+def p_pnValidateZerosAndOnes(p):
+    '''
+    pnValidateZerosAndOnes :
+    '''
+    global currentFunction
+    global currentVar
+    global dirFunciones
+    arrSize = p[-2]
+    specialFunction = pEspeciales.pop()
+    tipoFunction = funcValida.get_tipo(specialFunction, 'int', '')
+    if tipoFunction == 'error':
+        printTypeMismatch()
+    else:
+        if arrSize <= 0:
+            sys.exit("Error. Se necesita un tamano mayor a 0 para la funcion {}.".format(specialFunction))
+            return
+        else:
+            varInitialMemory = nextMemoryAvail(currentFunction, tipoFunction)
+            dirFunciones.add_varToFunction(currentFunction, currentVar, tipoFunction, 0, arrSize, varInitialMemory)
+            printAuxQuad(specialFunction, arrSize, '', varInitialMemory)
+            updateMemoryPointer(currentFunction, tipoFunction, arrSize - 1)
+    currentVar = ''
+
+def p_pnValidateRands(p):
+    '''
+    pnValidateRands :
+    '''
+    global currentFunction
+    global currentVar
+    global dirFunciones
+    global funcValida
+    arrSize = p[-2]
+    specialFunction = pEspeciales.pop()
+    param2 = popOperandos()
+    param1 = popOperandos()
+    tipoParam2 = popTipos()
+    tipoParam1 = popTipos()
+    memParam2 = popMemorias()
+    memParam1 = popMemorias()
+
+    if tipoParam1 == tipoParam2:
+        tipoFunction = funcValida.get_tipo(specialFunction, tipoParam1, 'int')
+        if tipoFunction == 'error':
+            print("tipos: ", specialFunction, tipoParam1, tipoParam2 )
+            printTypeMismatch()
+        else:
+            if arrSize <= 0:
+                sys.exit("Error. Se necesita un tamano mayor a 0 para la funcion {}.".format(specialFunction))
+                return
+            else:
+                varInitialMemory = nextMemoryAvail(currentFunction, tipoFunction)
+                dirFunciones.add_varToFunction(currentFunction, currentVar, tipoFunction, 0, arrSize, varInitialMemory)
+                aux =  str(memParam1) + '/' + str(memParam2)
+                printAuxQuad(specialFunction, aux, arrSize, varInitialMemory)
+                updateMemoryPointer(currentFunction, tipoFunction, arrSize - 1)
+    else:
+        sys.exit("Error. Los limites superior e inferior deben ser del mismo tipo para la funcion {}.".format(specialFunction))
+        return
+    currentVar = ''
 
 #Funcion para detectar que la variable actual variable es dimensionada
 def p_pnDetectDimensionada(p):
@@ -1791,6 +2087,10 @@ def p_pnDetectDimensionada(p):
     '''
     global flagDimensionada
     flagDimensionada = True
+    #Se tienen cosas que no se ocupan en las pilas
+    varTipo = popTipos()
+    varId = popOperandos()
+    varMem = popMemorias()
 
 #Funcion que recibe el numero de columnas
 def p_pnGetColumnas(p):
@@ -1867,14 +2167,11 @@ def p_pnGetConsForArray(p):
             currentConsForArray.append(consToAdd)
         else:
             printTypeMismatch()
-            return
     else: #el arreglo es de booleanos, quien hace un arreglo un arreglo de booleanos tho?
         if type(consToAdd) == 'bool':
             currentConsForArray.append(consToAdd)
         else:
             printTypeMismatch()
-            sys.exit()
-            return
 
 #Funcion que asigna los espacios de memoria para cada constante de un arreglo que fue asignado
 def p_pnAssignConsToArray(p):
@@ -1949,25 +2246,43 @@ def p_pnAccessArray(p):
     '''
     pnAccessArray :
     '''
-    global flagDimensionada
+    global flagDimensionada #esta y currentVar se asignan en pnQuadGenExp1
+    global currentVar #Variable que se esta tomando en cuenta
     global currentFunction
-    global currentVar
-    auxId = popOperandos() #Id de la variable que se quiere usar
-    auxMem = popMemorias()
-    auxType = popTipos()
+    auxId = popOperandos() #Elemento del index_intGlobales
+    auxMem = popMemorias() #Posicion de memoria que tiene lo que
+    auxType = popTipos() #Estas 3 cosas tambien se meten en pnQuadGenExp1
 
     if flagDimensionada: #Checar que si sea una variable dimensionada
         #checar que el indice que se quiere acceder resulte en un entero
         if auxType != 'int': #No resulta en entero
-            print("Error. Se esperaba un entero para acceder en el arreglo {}.".format())
+            print("Error. Se esperaba un entero para acceder en el arreglo {}.".format(currentVar))
             sys.exit()
             return
-        else: #Si resulta en entero, pushear
-            #Obtener memoria base de la variable
 
-            #Calcular memoria del indice
+        #Obtiene las dimensiones de la variable (Que es el limite superior) - Regresa arr[columnas, renglones]
+        varDims = dirFunciones.getDimensiones(currentFunction, currentVar)
+        if varDims == -1: #Si no existe buscar en contexto global
+            varDims = dirFunciones.getDimensiones(GLOBAL_CONTEXT, currentVar)
+            if varDims == -1:
+                print('ERROR. No se puede acceder por index a una variable no dimensionada')
+                sys.exit()
+                return
 
-        #Buscar el tipo de la variable en su contexto, sino la encuentra buscar en globales
+        #Cuadruplo para verificar si el index esta dentro de los limites del arreglo varDims
+        printAuxQuad('VERIFICA', auxMem, 0, varDims[0])
+
+        #Obtener memoria base de la variable
+        varMemPos = dirFunciones.search_memPos(currentFunction, currentVar)
+        if not varMemPos:
+            varMemPos = dirFunciones.search_memPos(GLOBAL_CONTEXT, currentVar)
+        #Si tampoco se encuentra en el contexto global, no existe la variable
+        if varMemPos < 0:
+            print("Error: Variable ", varId , " no declarada. :", varMemPos)
+            sys.exit("Error: Variable {} no declarada.".format(varId))
+            return
+
+        #Buscar el tipo de la variable en su contexto para pushearlo, sino la encuentra buscar en globales
         currentVarTipo = dirFunciones.search_varType(currentFunction, currentVar)
         if not currentVarTipo:
             currentVarTipo = dirFunciones.search_varType(GLOBAL_CONTEXT, currentVar)
@@ -1975,32 +2290,122 @@ def p_pnAccessArray(p):
         if not currentVarTipo:
             print("Error: Variable ", varId , " no declarada. 1")
             sys.exit("Error: Variable {} no declarada.".format(currentVar))
-            #TODO: Deberiamos handlear el hecho de que no este declarada y no tronar el sistema
             return
 
-        #Obtiene las dimensiones de la variable
-        varDims = dirFunciones.getDimensiones(currentFunction, currentVar)
-        if varDims == -1:
-            varDims = dirFunciones.getDimensiones(GLOBAL_CONTEXT, currentVar)
-            if varDims == -1:
-                print('La variable dimensionada no existe')
-                sys.exit()
-                return
-
-    #TENGO QUE GENERAR UN QUAD CON LOS CURRENT
+        #Calcular memoria del indice, creando un cuadruplo de la suma de la direccion de memoria base con el contenido de auxMem
+        contenidoDeAuxMem = '(' + str(auxMem) + ')'
+        temporalAccessMem = nextTemporalAvail('int')
+        printAuxQuad('+', varMemPos, contenidoDeAuxMem, temporalAccessMem)
+        #No se le suma memoria base, porque es 0
+        #Pushear indice a las pilas
+        contenidoDeTempAccessMem = '(' + str(temporalAccessMem) + ')'
+        pushOperando(currentVar)
+        pushMemoria(contenidoDeTempAccessMem)
+        pushTipo(currentVarTipo)
+        flagDimensionada = False #regresa la bandera a falso para detectar futuras variables dimensionadas
+        currentVar = ''
 
     else:
         print('ERROR. No se puede acceder por index a una variable no dimensionada')
         sys.exit()
         return
 
-
 #Funcion para accesar a un indice de una matriz
 def p_pnAccessMatrix(p):
     '''
     pnAccessMatrix :
     '''
-    global flagDimensionada
+    global flagDimensionada #Esta y currentVar se asignan en pnQuadGenExp1
+    global currentVar #Variable que se esta tomando en cuenta
+    global currentFunction #Contexto actual
+    rengId = popOperandos() #Index para renglones
+    rengMem = popMemorias()
+    rengType = popTipos()
+    colId = popOperandos() #Index para columnas
+    colMem = popMemorias()
+    colType = popTipos()
+
+    if flagDimensionada: #Checar que si sea una variable dimensionada
+        #Checar que ambos indices que se quieren acceder resulten en enteros
+        if colType != 'int':
+            print("Error. Se esperaba un entero para acceder a las columnas de la matriz {}.".format(currentVar))
+            if rengType != 'int':
+                print("Error. Se esperaba un entero para acceder a los renglones de la matriz {}.".format(currentVar))
+            sys.exit()
+            return
+        if rengType != 'int':
+            print("Error. Se esperaba un entero para acceder a los renglones de la matriz {}.".format(currentVar))
+            sys.exit()
+            return
+
+        #Obtiene las dimensiones de la variable (Que son los limites superiores) - Regresa arr[columnas, renglones]
+        varDims = dirFunciones.getDimensiones(currentFunction, currentVar)
+        if varDims == -1: #Si no existe buscar en contexto global
+            varDims = dirFunciones.getDimensiones(GLOBAL_CONTEXT, currentVar)
+            if varDims == -1:
+                print('ERROR. No se puede acceder por index a una variable no dimensionada')
+                sys.exit()
+                return
+
+        #Cuadruplo para verificar si los indices estan dentro de lo permitido
+        printAuxQuad('VERIFICA', colMem, 0, varDims[0]) #columnas
+        printAuxQuad('VERIFICA', rengMem, 0, varDims[1]) #renglones
+
+        #Obtener memoria base de la variable dimensionada
+        varMemPos = dirFunciones.search_memPos(currentFunction, currentVar)
+        if not varMemPos:
+            varMemPos = dirFunciones.search_memPos(GLOBAL_CONTEXT, currentVar)
+        #Si tampoco se encuentra en el contexto global, no existe la variable
+        if varMemPos < 0:
+            print("Error: Variable ", varId , " no declarada. :", varMemPos)
+            sys.exit("Error: Variable {} no declarada.".format(varId))
+            return
+
+        #Buscar el tipo de la variable en su contexto para pushearlo, sino la encuentra buscar en globales
+        currentVarTipo = dirFunciones.search_varType(currentFunction, currentVar)
+        if not currentVarTipo:
+            currentVarTipo = dirFunciones.search_varType(GLOBAL_CONTEXT, currentVar)
+        #Si tampoco se encuentra en el contexto global, no existe la variable
+        if not currentVarTipo:
+            print("Error: Variable ", varId , " no declarada. 1")
+            sys.exit("Error: Variable {} no declarada.".format(currentVar))
+            return
+
+        #Calcular memoria del indice, creando un cuadruplo de la suma de la direccion base
+        # mas (cantidadRenglones * tamanoCol + cantidadColumnas)
+        temporalAccessMem = nextTemporalAvail('int')
+        # cantidadRenglones * tamanoCol
+        printAuxQuad('*', rengMem, asMemConstant(varDims[0]), temporalAccessMem)
+        # temporalAccessMem + cantidadColumnas
+        temporalAccessMem2 = nextTemporalAvail('int')
+        printAuxQuad('+', temporalAccessMem, colMem, temporalAccessMem2)
+        # (temporalAccessMem2) + dirBase
+        temporalAccessMem3 = nextTemporalAvail('int')
+        contenidoDeAuxMem = '(' + str(temporalAccessMem2) + ')'
+        printAuxQuad('+', varMemPos, contenidoDeAuxMem, temporalAccessMem3)
+
+        #Pushear indice de memoria a las pilas
+        contenidoDeTempAccessMem = '(' + str(temporalAccessMem3) + ')'
+        pushOperando(currentVar)
+        pushMemoria(contenidoDeTempAccessMem)
+        pushTipo(currentVarTipo)
+        flagDimensionada = False #regresa la bandera a falso para detectar futuras variables dimensionadas
+        currentVar = ''
+    else:
+        print('ERROR. No se puede acceder por index a una variable no dimensionada')
+        sys.exit()
+        return
+
+def p_pnAddSpecialFunctionVar(p):
+    '''
+    pnAddSpecialFunctionVar :
+    '''
+    #global currentType
+    global currentVar
+    #currentType = p[-4] #tipo variable special func
+    currentVar = p[-3] #id variable special func
+
+
 
 
 #Defining Lexer & Parser

@@ -37,9 +37,6 @@ class Jubilo_CuboSemantico_SFuncs:
             ( 'covariance' , 'float' , 'float') : 'float',
             ( 'covariance' , 'float' , 'int') : 'float',
 
-            ( 'var' , 'float' , '' ) : 'float',
-            ( 'var' , 'int' , '' ) : 'float',
-
             ( 'correlation' , 'int' , 'int' ) : 'float',
             ( 'correlation' , 'int' , 'float' ) : 'float',
             ( 'correlation' , 'float' , 'float') : 'float',
@@ -51,11 +48,10 @@ class Jubilo_CuboSemantico_SFuncs:
             ( 'transpose' , 'int' , '' ) : 'int',
             ( 'transpose' , 'float', '') : 'float',
 
-            ( 'readcsv' , 'string' , '' ) : 'bool',
-            ( 'exportcsv' , 'string' , '' ) : 'bool',
+            ( 'exportcsv' , 'string' , 'string' ) : 'bool',
 
-            ( 'plothist' , 'int', '' ) : 'histogram',
-            ( 'plothist' , 'float', '') : 'histogram',
+            ( 'plothist' , 'int', 'int' ) : 'histogram',
+            ( 'plothist' , 'float', 'float') : 'histogram',
 
             ( 'plotline' , 'int' , 'int' ) : 'line',
             ( 'plotline' , 'int' , 'float' ) : 'line',
@@ -64,9 +60,9 @@ class Jubilo_CuboSemantico_SFuncs:
 
             #Se puede regresar vacio? Pregunta para mi yo del futuro. v
             #Tas bien guapo we. Para Hector del futuro cuando este triste
-            ('exchange', 'int', 'int'): '',
-            ('exchange', 'bool', 'bool'): '',
-            ('exchange', 'float', 'float'): '',
+            ('exchange', 'int', 'int'): 'int',
+            ('exchange', 'bool', 'bool'): 'bool',
+            ('exchange', 'float', 'float'): 'float',
 
             ( 'lineareg' , 'int' , 'int' ) : 'float',
             ( 'lineareg' , 'int' , 'float' ) : 'float',
@@ -78,16 +74,9 @@ class Jubilo_CuboSemantico_SFuncs:
             #ambos rangos vengan y se manden como enteros, antes de mandar a
             #validar si son tipos de datos validos. Es decir revisar que ambos
             #limites sean o enteros o flotantes.
-            #Al igual para el numero de renglones y columnas en las matrices:
-            #se validara que ambos vengan enteros antes de validar que el tipo
-            #de dato se puede ingresar en la funcion especial.
 
             ( 'randint' , 'int' , 'int' ) : 'int', #1er int son limites, 2do int es cant de randoms
-            ( 'randint' , 'int' , '' ) : 'int',
-            ( 'randfloat' , 'float' , 'int' ) : 'float', #1er float son limites, 2do int es cant de randoms
-            ( 'randfloat' , 'float' , '' ) : 'float',
-            ( 'randintmat' , 'int' , 'int' ) : 'int', #1er int son limites, 2do int es cant de rows/columns
-            ( 'randfloatmat' , 'float' , 'int' ) : 'float' #1er float son limites, 2do int es cant de rows/columns
+            ( 'randfloat' , 'float' , 'int' ) : 'float' #1er float son limites, 2do int es cant de randoms
         }
 
     '''
@@ -96,7 +85,7 @@ class Jubilo_CuboSemantico_SFuncs:
     '''
     def get_tipo(self, spfunc, operando1, operando2):
         try:
-            resultado = self.diccionario[spfunc, operando1, operando1]
+            resultado = self.diccionario[spfunc, operando1, operando2]
         except:
             resultado = 'error'
         return resultado
