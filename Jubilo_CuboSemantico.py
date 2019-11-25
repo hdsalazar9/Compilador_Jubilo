@@ -140,9 +140,9 @@ class Jubilo_CuboSemantico:
             ( 'bool' , 'bool' , '||' ) : 'bool',
             ( 'bool' , 'bool' , '&&' ) : 'bool',
 
-            ('read', 'int', '') : 'string',
-            ('read', 'float', '') : 'string',
-            ('read', 'bool', '') : 'string',
+            ('read', 'int', '') : 'int',
+            ('read', 'float', '') : 'float',
+            ('read', 'bool', '') : 'bool',
             ('read', 'string', '') : 'error',
 
             ('print', 'int', '') : 'string',

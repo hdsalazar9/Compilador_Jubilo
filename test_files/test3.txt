@@ -17,9 +17,7 @@ func int uno(int a, int b){
 }
 
 void main(){
-
-read(y[0][1]);
-
+read(x);
 int k;
 uno(1,2);
 k = uno(1,2);

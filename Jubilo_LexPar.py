@@ -851,6 +851,13 @@ def p_func(p):
     func : ID LPAREN pnQuadEra params RPAREN pnQuadGoSub
     '''
 
+def p_func2(p):
+    '''
+    func2 : ID LPAREN pnQuadEra params RPAREN pnQuadGoSub2
+    '''
+
+
+
 def p_params(p):
     '''
     params : paramsaux
@@ -985,7 +992,7 @@ def p_var_cte(p):
     '''
     var_cte : sfunc_operando
             | constante
-            | func
+            | func2
             | ID pnQuadGenExp1 var_cte_predicate
     '''
 
@@ -1151,6 +1158,7 @@ def p_pnQuadGenExp1(p):
     pushTipo(varTipo)
     print("pnQuadGenExp1 poperando: ", pOperandos)
     print("pnQuadGenExp1 ptipos: ", pTipos)
+
 
 '''
 Punto neuralgico para anadir un + o - a la pila de operadores pOper
@@ -1738,6 +1746,30 @@ def p_pnQuadGoSub(p):
         print ('ERROR. Argument mysmatch')
         sys.exit()
         return
+
+def p_pnQuadGoSub2(p):
+    '''
+    pnQuadGoSub2 :
+    '''
+    global pFunciones
+    global pArgumentos
+    args = pArgumentos.pop()
+    function = pFunciones.pop()
+    resultadoTemporal = pOperandos.pop()
+    # 5. Verify that the last parameter points to null
+    if args == dirFunciones.diccionario[function]['cantParametros']:
+        # 6. Generate action GOSUB, procedure-name, '', initial address
+        quadStartFunc = dirFunciones.diccionario[function]['quadCont']
+        #(GOSUB, nombre de funcion, cuadruplo para saber a donde regresar, cuadruplo donde empieza el codigo de la fx )
+        printAuxQuad('GOSUB', function, nextQuad()+1, quadStartFunc)
+        printAuxQuad('=', function, '', resultadoTemporal)
+        pushOperando(resultadoTemporal)
+        #printAuxQuad('GOSUB', function, nextQuad()+1, dirFunciones.diccionario[function][3])
+    else:
+        print ('ERROR. Argument mysmatch')
+        sys.exit()
+        return
+
 
 def p_pnQuadRetorno(p):
     '''
