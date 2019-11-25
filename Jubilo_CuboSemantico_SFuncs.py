@@ -51,7 +51,7 @@ class Jubilo_CuboSemantico_SFuncs:
             ( 'exportcsv' , 'string' , 'string' ) : 'bool',
 
             ( 'plothist' , 'int', 'int' ) : 'histogram',
-            ( 'plothist' , 'float', 'float') : 'histogram',
+            ( 'plothist' , 'float', 'int') : 'histogram',
 
             ( 'plotline' , 'int' , 'int' ) : 'line',
             ( 'plotline' , 'int' , 'float' ) : 'line',

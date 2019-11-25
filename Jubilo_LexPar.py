@@ -174,32 +174,22 @@ Espacios de memoria:
 +globales flotantes   + batch_size
 +---------------------+
 +globales booleanas   + batch_size
-+---------------------+
-+globales character   + batch_size
 +++++++++++++++++++++++
 +locales enteras      + batch_size
 +---------------------+
 +locales flotantes    + batch_size
 +---------------------+
 +locales booleanas    + batch_size
-+---------------------+
-+locales character    + batch_size
 +++++++++++++++++++++++
 +temp enteras         + batch_size
 +---------------------+
 +temp flotantes       + batch_size
 +---------------------+
 +temp booleanas       + batch_size
-+---------------------+
-+temp character       + batch_size
 +++++++++++++++++++++++
 +constantes enteras   + batch_size
 +---------------------+
 +constantes flotantes + batch_size
-+---------------------+
-+constantes booleanas + batch_size
-+---------------------+
-+constantes character + batch_size
 +---------------------+
 +constantes string    + batch_size
 +++++++++++++++++++++++
@@ -522,7 +512,7 @@ def printQuadsInFormat():
 tokens = [
     'PROGRAM','VOID','MAIN','ID','FUNC','COMMENT', #palabras de programa
     'PRINT','READ','RETURN','IF','ELSE','WHILE', #palabras de programa, condiciones y ciclos
-    'INT_TYPE','FLOAT_TYPE','BOOL_TYPE','CHAR_TYPE','STRING_TYPE', #tipos de datos
+    'INT_TYPE','FLOAT_TYPE','BOOL_TYPE','STRING_TYPE', #tipos de datos
     'PLUS_OP','MINUS_OP','MULT_OP','DIV_OP','EQUAL_OP', #operadores
     'EQUAL_LOG','LESS_LOG','LEQUAL_LOG','GREAT_LOG', #operadores logicos
     'GEQUAL_LOG','DIFF_LOG','OR_LOG','AND_LOG', #operadores logicos
@@ -533,7 +523,7 @@ tokens = [
     'COVARIANCE','CORRELATION', 'SORT','TRANSPOSE', #funciones especiales
     'READCSV','EXPORTCSV', 'PLOTHIST','PLOTLINE', #funciones especiales
     'EXCHANGE','LINEAREG', 'RANDINT','RANDFLOAT', #funciones especiales
-    'FLOAT_CTE','INT_CTE','BOOL_CTE','CHAR_CTE','STRING_CTE', #constantes
+    'FLOAT_CTE','INT_CTE','BOOL_CTE','STRING_CTE', #constantes
     'NEW_LINE'
 ]
 
@@ -578,11 +568,6 @@ def t_STRING_CTE(t):
     t.value = str(t.value)
     return t
 
-def t_CHAR_CTE(t):
-    r'\'[a-zA-Z0-9_]\''
-    t.value = chr(t.value)
-    return t
-
 def t_COMMENT(t):
     r'\~.*'
     return t
@@ -619,8 +604,6 @@ def t_ID(t):
         t.type = 'FLOAT_TYPE'
     elif t.value == 'bool':
         t.type = 'BOOL_TYPE'
-    elif t.value == 'char':
-        t.type = 'CHAR_TYPE'
     elif t.value == 'string':
         t.type = 'STRING_TYPE'
     elif t.value == 'true':
@@ -814,17 +797,14 @@ def p_type(p):
     type : INT_TYPE
          | FLOAT_TYPE
          | BOOL_TYPE
-         | CHAR_TYPE
          | STRING_TYPE
     '''
-    #TODO: Probablemente el VOID no deberia estar ahi...
     p[0] = p[1]
 
 def p_constante(p):
     '''
     constante : BOOL_CTE pnQuadGenCteBool
               | STRING_CTE pnQuadGenCteString
-              | CHAR_CTE pnQuadGenCteChar
               | MINUS_OP pnNegConst constante_num
               | constante_num
     '''
@@ -1043,13 +1023,13 @@ def p_sfunc(p):
           | ID MINUS_OP GREAT_LOG pnAddSpecialFunctionVar ONES npSpecialFunctionId LPAREN INT_CTE RPAREN pnValidateZerosAndOnes
           | ID MINUS_OP GREAT_LOG pnAddSpecialFunctionVar RANDINT npSpecialFunctionId LPAREN constante COMMA constante COMMA INT_CTE RPAREN pnValidateRands
           | ID MINUS_OP GREAT_LOG pnAddSpecialFunctionVar RANDFLOAT npSpecialFunctionId LPAREN constante COMMA constante COMMA INT_CTE RPAREN pnValidateRands
+          | SORT npSpecialFunctionId LPAREN ID pnValidateSortTranspose RPAREN
+          | TRANSPOSE npSpecialFunctionId LPAREN ID pnValidateSortTranspose RPAREN
+          | PLOTHIST npSpecialFunctionId LPAREN ID COMMA INT_CTE pnValidatePlotHist RPAREN
+          | PLOTLINE npSpecialFunctionId LPAREN ID COMMA ID pnValidatePlotLine RPAREN
 
-          | SORT npSpecialFunctionId LPAREN ID pnValidateSort RPAREN
-          | TRANSPOSE npSpecialFunctionId LPAREN ID COMMA ID pnValidateTranspose RPAREN
+          | EXPORTCSV npSpecialFunctionId LPAREN STRING_CTE COMMA ID RPAREN
 
-          | EXPORTCSV npSpecialFunctionId spfunc_two_params
-          | PLOTHIST npSpecialFunctionId spfunc_params
-          | PLOTLINE npSpecialFunctionId spfunc_two_params
           | EXCHANGE npSpecialFunctionId spfunc_two_params
           | LINEAREG npSpecialFunctionId LPAREN ID COMMA ID  RPAREN
     '''
@@ -1079,7 +1059,7 @@ def p_empty(p):
 
 def p_error(p):
     print ("Syntax error in line " + str(lexer.lineno))
-    print("ERROR LOCO EN: ",p)
+    print("ERROR DE SINTAXIS EN: ",p)
     sys.exit()
     return
 
@@ -1589,12 +1569,6 @@ def p_pnQuadGenCteString(p):
     '''
     pushConstant(p[-1])
 
-def p_pnQuadGenCteChar(p):
-    '''
-    pnQuadGenCteChar :
-    '''
-    pushConstant(p[-1])
-
 '''
 Punto neuralgico si es que se trata de una constante negativa
 '''
@@ -1946,9 +1920,9 @@ def p_pnValidateId2(p):
         pushTipo(tipoFunction)
 
 #Punto neuralgico para el sort de un arreglo, no se crea espacio de memoria pues se modifica el que se manda por param
-def p_pnValidateSort(p):
+def p_pnValidateSortTranspose(p):
     '''
-    pnValidateSort :
+    pnValidateSortTranspose :
     '''
     global currentFunction
     global pEspeciales
@@ -1960,15 +1934,15 @@ def p_pnValidateSort(p):
     elif dirFunciones.exist_var(GLOBAL_CONTEXT, currentId):
         auxContext = GLOBAL_CONTEXT
     else:
-        print('Error. La variable ID = {} no existe en ninguna parte.'.format(nombreX))
+        print('Error. La variable ID = {} no existe en ninguna parte.'.format(currentId))
         sys.exit()
         return
 
     dimsVar = dirFunciones.getDimensiones(auxContext, currentId)
     typeVar = dirFunciones.search_varType(auxContext, currentId)
     memVar = dirFunciones.search_memPos(auxContext, currentId) #Memoria base
-    if (dimsVar[0] == 0 or dimsVar[1] > 0): #Si no es un arreglo, petar
-        print('Error. Se esperaba un parametro de tipo arreglo')
+    if dimsVar[0] == 0: #Si no es un arreglo, petar
+        print('Error. Se esperaba un parametro dimensionado')
         sys.exit()
         return
     else:
@@ -1976,14 +1950,99 @@ def p_pnValidateSort(p):
         if tipoFunction == 'error':
             printTypeMismatch()
         else:
-            #Quad(Sort, de donde empieza el arreglo, cuanto dura el arreglo, donde guardarlo)
-            printAuxQuad(specialFunction, memVar, dimsVar[0], memVar)
+            #Quad(Sort, de donde empieza el arreglo, cuanto dura el arreglo o matriz, donde guardarlo)
+            if dimsVar[1] == 0: #No Es matriz
+                printAuxQuad(specialFunction, memVar, dimsVar[0], memVar)
+            else: #si es matriz
+                auxCasillas = dimsVar[0] * dimsVar[1]
+                printAuxQuad(specialFunction, memVar, auxCasillas, memVar)
 
-#Punto neuralgico para el transpose de una matriz, no crea espacio de memoria pues utiliza la misma memoria donde estaba creado
-def p_pnValidateTranspose(p):
+#Punto neuralgico para desplegar un histograma en base a un arreglo de datos y una constante entera #bins
+def p_pnValidatePlotHist(p):
     '''
-    pnValidateTranspose :
+    pnValidatePlotHist :
     '''
+    global currentFunction
+    global pEspeciales
+    global dirFunciones
+    specialFunction = pEspeciales.pop()
+    numBins = p[-1]
+    currentId = p[-3]
+    auxContext = ''
+    if dirFunciones.exist_var(currentFunction, currentId):
+        auxContext = currentFunction
+    elif dirFunciones.exist_var(GLOBAL_CONTEXT, currentId):
+        auxContext = GLOBAL_CONTEXT
+    else:
+        print('Error. La variable ID = {} no existe en ninguna parte.'.format(currentId))
+        sys.exit()
+        return
+
+    dimsVar = dirFunciones.getDimensiones(auxContext, currentId)
+    typeVar = dirFunciones.search_varType(auxContext, currentId)
+    memVar = dirFunciones.search_memPos(auxContext, currentId) #Memoria base
+    if dimsVar[0] == 0 or dimsVar[1] > 0: #Si no es un arreglo, petar
+        print('Error. Se esperaba un parametro arreglo.')
+        sys.exit()
+        return
+    else: #si es un arreglo
+        tipoFunction = funcValida.get_tipo(specialFunction, typeVar, 'int')
+        if tipoFunction == 'error':
+            printTypeMismatch()
+        else:
+            #Quad(Plot Hist, memPos inicial del arreglo, tamano del arreglo, memPos Bins)
+            binsMem = asMemConstant(numBins) #Obtener direccion de memoria de la constante
+            printAuxQuad(specialFunction, memVar, dimsVar[0], binsMem)
+
+#Punto neuralgico para desplegar una grafica lineal en base a dos arreglos
+def p_pnValidatePlotLine(p):
+    '''
+    pnValidatePlotLine :
+    '''
+    global currentFunction
+    global pEspeciales
+    global dirFunciones
+    specialFunction = pEspeciales.pop()
+    paramY = p[-1]
+    paramX = p[-3]
+    auxContextX = ''
+    auxContextY = ''
+    if dirFunciones.exist_var(currentFunction, paramY):
+        auxContextY = currentFunction
+    elif dirFunciones.exist_var(GLOBAL_CONTEXT, paramY):
+        auxContextY = GLOBAL_CONTEXT
+    else:
+        print('Error. La variable ID = {} no existe en ninguna parte.'.format(paramY))
+        sys.exit()
+        return
+    if dirFunciones.exist_var(currentFunction, paramX):
+        auxContextX = currentFunction
+    elif dirFunciones.exist_var(GLOBAL_CONTEXT, paramX):
+        auxContextX = GLOBAL_CONTEXT
+    else:
+        print('Error. La variable ID = {} no existe en ninguna parte.'.format(paramX))
+        sys.exit()
+        return
+
+    dimsVarX = dirFunciones.getDimensiones(auxContextX, paramX)
+    typeVarX = dirFunciones.search_varType(auxContextX, paramX)
+    memVarX = dirFunciones.search_memPos(auxContextX, paramX) #Memoria base de X
+    dimsVarY = dirFunciones.getDimensiones(auxContextY, paramY)
+    typeVarY = dirFunciones.search_varType(auxContextY, paramY)
+    memVarY = dirFunciones.search_memPos(auxContextY, paramY) #Memoria base de Y
+    if dimsVarX[0] == 0 or dimsVarY[0] == 0 or dimsVarX[1] > 0 or dimsVarY[1] > 0: #Alguno de los dos parametros no es arreglo
+        sys.exit("Error. Se esperan dos parametros de tipo arreglo para la funcion {}.".format(specialFunction))
+        return
+    if dimsVarX[0] != dimsVarY[0]: #Los arreglos mandados como parametro no son del mismo tamano
+        sys.exit("Error. Los parametros de tipo arreglo para la funcion {} deben ser del mismo tamano.".format(specialFunction))
+        return
+
+    tipoFunction = funcValida.get_tipo(specialFunction, typeVarX, typeVarY)
+    if tipoFunction == 'error':
+        printTypeMismatch()
+    else:
+        #Quad(plot line, donde empieza arr1, donde empieza arr2, tamano del arreglo)
+        printAuxQuad(specialFunction, memVarX, memVarY, dimsVarX[0])
 
 #Valida el caso especial de la funcion arrange, cuyos dos Full_EXP deben ser de tipo entero
 def p_pnValidateArrange(p):

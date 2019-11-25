@@ -1,12 +1,10 @@
 program velocirraptor:
-float ka[4];
+
+float w[5];
+int x[2] = [0,1];
+float y[2] = [0,1];
 
 void main(){
-int x = 2;
-int w[3];
-int y = fact(x);
-int z = sum(w);
-float cov = covariance(w, ka);
-sort(w);
-float s = 20.5;
+plothist(w, 6);
+plotline(x, y);
 }
