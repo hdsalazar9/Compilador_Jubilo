@@ -28,6 +28,7 @@ pSaltos = [] # pila que almacena los indices de saltos para condiciones y ciclos
 pFunciones = [] # pila que almacena los indices de ubicacion de las funciones del programa
 pArgumentos = [] # pila que almacena cantidad de argumentos de una funcion
 pEspeciales = [] #pila que almacena los identificadores de las funciones especiales usadas en el programa
+
 '''
 Manejo de cuadruplos
 '''
@@ -40,7 +41,6 @@ Enteras, Flotantes, String
 dict_Int = {}
 dict_Float = {}
 dict_String = {}
-
 
 '''
 Constantes
@@ -63,6 +63,7 @@ negativeConstant = False
 currentContParameters = 0 #Cantidad de parametros para la funcion actualmente siendo compilada
 currentContVars = 0 #Cantidad de variables para la funcion actualmente siendo compilada
 flagRetorno = False #bandera para detectar cuando una funcion debe o no tener valor de retorno
+yaSeRetorno = False #Bandera para saber si ya se regreso en la funcion actual
 
 '''
 Variables para el manejo de arreglos y matrices
@@ -82,62 +83,50 @@ Funciones para simular y manejar pilas (push, pop, top)
 def popOperandos():
     global pOperandos
     return pOperandos.pop()
-
 #Toma el ultimo elemento de Pila de Operandos
 def popOperadores():
     global pOperadores
     return pOperadores.pop()
-
 #
 def popMemorias():
     global pMemorias
     return pMemorias.pop()
-
 #Toma el ultimo elemento de Pila de Tipos
 def popTipos():
     global pTipos
     return pTipos.pop()
-
 #Toma el ultimo elemento de Pila de Saltos
 def popSaltos():
     global pSaltos
     return pSaltos.pop()
-
 #Simula pop stack para remover el ultimo quadruplo
 def popQuad(quad):
     global arregloQuads
     return arregloQuads.pop()
-
 #Simula push stack para anadir nuevo operando
 def pushOperando(operando):
     global pOperandos
     pOperandos.append(operando)
-
 #Simula push stack para anadir nuevo operador
 def pushOperador(operador):
     global pOperadores
     pOperadores.append(operador)
-
 #Simula push stack para anadir nueva posicion de memoria
 def pushMemoria(memoria):
     global pMemorias
     pMemorias.append(memoria)
-
 #Simula push stack para anadir nuevo tipo
 def pushTipo(tipo):
     global pTipos
     pTipos.append(tipo)
-
 #Simula push stack para anadir nuevo salto
 def pushSalto(salto):
     global pSaltos
     pSaltos.append(salto)
-
 #Simula push stack para anadir nuevo quadruplo
 def pushQuad(quad):
     global arregloQuads
     arregloQuads.append(quad)
-
 #Obtiene el ultimo operando ingresado a la pila de operandos
 def topOperador():
     global pOperadores
@@ -145,7 +134,6 @@ def topOperador():
     if (last < 0):
         return 'empty'
     return pOperadores[last]
-
 #Obtiene el ultimo tipo ingresado a la pila de tipos
 def topTipo():
     global pTipos
@@ -153,7 +141,6 @@ def topTipo():
     if(last < 0):
         return 'empty'
     return pTipos[last]
-
 #Obtiene el indice del siguiente cuadruplo del arreglo de cuadruplos
 def nextQuad():
     global arregloQuads
@@ -210,6 +197,8 @@ index_boolTemporales = index_floatTemporales + BATCH_SIZE
 index_intConstantes = index_boolTemporales + BATCH_SIZE
 index_floatConstantes = index_intConstantes + BATCH_SIZE
 index_stringConstantes = index_floatConstantes + BATCH_SIZE
+#index_boolConstantes = index_stringConstantes = true
+#index_boolConstantes = index_stringConstantes + 1 = false
 
 '''
 Variables para manejar cambios de contexto
@@ -237,7 +226,6 @@ def nextMemoryAvail(scope, tipo):
     global cont_BoolLocal
 
     memPos = -1
-
     #Obtener memoria para una global
     if scope == GLOBAL_CONTEXT:
         if tipo == 'int':
@@ -488,6 +476,8 @@ def printTypeMismatch():
 #Regresa un mensaje de error en caso de que el retorno de una funcion sea incorrecto
 def printReturnError():
     print('Error: La funcion intenta retornar un valor que no coincide con su tipo')
+    sys.exit()
+    return
 
 #Funcion para desplegar como quedaria
 def printAuxQuad(quad_operator, quad_leftOper, quad_rightOper, quad_result):
@@ -512,7 +502,7 @@ def printQuadsInFormat():
 tokens = [
     'PROGRAM','VOID','MAIN','ID','FUNC','COMMENT', #palabras de programa
     'PRINT','READ','RETURN','IF','ELSE','WHILE', #palabras de programa, condiciones y ciclos
-    'INT_TYPE','FLOAT_TYPE','BOOL_TYPE','STRING_TYPE', #tipos de datos
+    'INT_TYPE','FLOAT_TYPE','BOOL_TYPE', #tipos de datos
     'PLUS_OP','MINUS_OP','MULT_OP','DIV_OP','EQUAL_OP', #operadores
     'EQUAL_LOG','LESS_LOG','LEQUAL_LOG','GREAT_LOG', #operadores logicos
     'GEQUAL_LOG','DIFF_LOG','OR_LOG','AND_LOG', #operadores logicos
@@ -564,7 +554,7 @@ def t_INT_CTE(t):
     return t
 
 def t_STRING_CTE(t):
-    r'\"[a-zA-Z0-9_]*\"'
+    r'\"[a-zA-Z0-9_\.]*\"'
     t.value = str(t.value)
     return t
 
@@ -604,8 +594,6 @@ def t_ID(t):
         t.type = 'FLOAT_TYPE'
     elif t.value == 'bool':
         t.type = 'BOOL_TYPE'
-    elif t.value == 'string':
-        t.type = 'STRING_TYPE'
     elif t.value == 'true':
         t.type = 'BOOL_CTE'
     elif t.value == 'false':
@@ -648,7 +636,7 @@ def t_ID(t):
         t.type = 'PLOTLINE'
     elif t.value == 'exchange':
         t.type = 'EXCHANGE'
-    elif t.value == 'linear':
+    elif t.value == 'lineareg':
         t.type = 'LINEAREG'
     elif t.value == 'randint':
         t.type = 'RANDINT'
@@ -797,7 +785,6 @@ def p_type(p):
     type : INT_TYPE
          | FLOAT_TYPE
          | BOOL_TYPE
-         | STRING_TYPE
     '''
     p[0] = p[1]
 
@@ -826,7 +813,7 @@ def p_constante_num(p):
 
 def p_main(p):
     '''
-    main : VOID MAIN pnFillGotoMain LPAREN RPAREN pnCreateFunctionMain bloque
+    main : VOID MAIN pnFillGotoMain LPAREN RPAREN pnCreateFunctionMain bloque pnEndProc
     '''
 
 def p_bloque(p):
@@ -855,10 +842,14 @@ def p_estatuto(p):
 
 def p_func_call(p):
     '''
-    func_call : ID LPAREN pnQuadEra params RPAREN pnQuadGoSub SEMIC
-
+    func_call : func SEMIC
     '''
     p[0] = 'func_call'
+
+def p_func(p):
+    '''
+    func : ID LPAREN pnQuadEra params RPAREN pnQuadGoSub
+    '''
 
 def p_params(p):
     '''
@@ -994,6 +985,7 @@ def p_var_cte(p):
     '''
     var_cte : sfunc_operando
             | constante
+            | func
             | ID pnQuadGenExp1 var_cte_predicate
     '''
 
@@ -1027,11 +1019,9 @@ def p_sfunc(p):
           | TRANSPOSE npSpecialFunctionId LPAREN ID pnValidateSortTranspose RPAREN
           | PLOTHIST npSpecialFunctionId LPAREN ID COMMA INT_CTE pnValidatePlotHist RPAREN
           | PLOTLINE npSpecialFunctionId LPAREN ID COMMA ID pnValidatePlotLine RPAREN
-
-          | EXPORTCSV npSpecialFunctionId LPAREN STRING_CTE COMMA ID RPAREN
-
-          | EXCHANGE npSpecialFunctionId spfunc_two_params
-          | LINEAREG npSpecialFunctionId LPAREN ID COMMA ID  RPAREN
+          | LINEAREG npSpecialFunctionId LPAREN ID COMMA ID pnValidatePlotLine RPAREN
+          | EXPORTCSV npSpecialFunctionId LPAREN STRING_CTE COMMA ID pnValidateExportCsv RPAREN
+          | EXCHANGE npSpecialFunctionId LPAREN ID COMMA ID pnValidateExchange RPAREN
     '''
 
 def p_spfunc_params(p):
@@ -1291,7 +1281,7 @@ def p_pnQuadGenExp9(p):
     if topOperador() in OPERADORES_RELACIONALES:
         quad_rightOper = popOperandos()
         quad_rightType = popTipos()
-        quad_leftMem = popMemorias()
+        quad_rightMem = popMemorias()
         quad_leftOper = popOperandos()
         quad_leftType = popTipos()
         quad_leftMem = popMemorias()
@@ -1653,7 +1643,7 @@ def p_pnEndProc(p):
     pnEndProc :
     '''
     global flagRetorno
-
+    global yaSeRetorno
     #Reset de apuntadores de memoria local
     global cont_IntLocal
     global cont_FloatLocal
@@ -1669,8 +1659,12 @@ def p_pnEndProc(p):
     cont_FloatTemp = index_intTemporales
     cont_BoolTemp = index_floatTemporales
 
+    if yaSeRetorno == False: #No se ha regresado nada
+        sys.exit("Error. Se ocupa crear un Retorno en todas las funciones.")
+        return
     printAuxQuad('ENDPROC', '', '', '')
     flagRetorno = False
+    yaSeRetorno = False
 
 #Valida que la funcion a llamar exista en el directorio de funciones y genera la accion ERA
 def p_pnQuadEra(p):
@@ -1751,11 +1745,13 @@ def p_pnQuadRetorno(p):
     '''
     global currentFunction
     global flagRetorno #SAber si tengo que regresar un valor o no
+    global yaSeRetorno
 
     if not flagRetorno:
         if p[-1] == 'return':
             #Si no tengo regresar nada y no le estoy mandando nada
             printAuxQuad('RETURN', '', '', '')
+            yaSeRetorno = True
         else:
             printReturnError()
     else: #si si tengo que regresar algo
@@ -1765,6 +1761,11 @@ def p_pnQuadRetorno(p):
         #si los tipos son correctos se crea el cuadruplo con el operando regresado
         if dirFunciones.diccionario[currentFunction]['tipo'] == tipoRet:
             printAuxQuad('RETURN', '', '', memRet)
+            yaSeRetorno = True
+            #Push de cuando se regresa un valor
+            pushOperando(operandoRet)
+            pushMemoria(memRet)
+            pushTipo(tipoRet)
         else:
             #Si no es correcto los tipos, se genera un error
             printReturnError()
@@ -1994,7 +1995,7 @@ def p_pnValidatePlotHist(p):
             binsMem = asMemConstant(numBins) #Obtener direccion de memoria de la constante
             printAuxQuad(specialFunction, memVar, dimsVar[0], binsMem)
 
-#Punto neuralgico para desplegar una grafica lineal en base a dos arreglos
+#Punto neuralgico para desplegar una grafica lineal o la regresion lineal en base a dos arreglos
 def p_pnValidatePlotLine(p):
     '''
     pnValidatePlotLine :
@@ -2036,13 +2037,119 @@ def p_pnValidatePlotLine(p):
     if dimsVarX[0] != dimsVarY[0]: #Los arreglos mandados como parametro no son del mismo tamano
         sys.exit("Error. Los parametros de tipo arreglo para la funcion {} deben ser del mismo tamano.".format(specialFunction))
         return
-
     tipoFunction = funcValida.get_tipo(specialFunction, typeVarX, typeVarY)
+    #print("LOS TIPOS DE LAS COSAS SON: ", specialFunction, typeVarX, typeVarY)
     if tipoFunction == 'error':
         printTypeMismatch()
     else:
         #Quad(plot line, donde empieza arr1, donde empieza arr2, tamano del arreglo)
         printAuxQuad(specialFunction, memVarX, memVarY, dimsVarX[0])
+
+#Punto neuralgico para el export de csv
+def p_pnValidateExportCsv(p):
+    '''
+    pnValidateExportCsv :
+    '''
+    global currentFunction
+    global pEspeciales
+    global dirFunciones
+    specialFunction = pEspeciales.pop()
+    paramName = str(p[-3])
+    paramId = p[-1]
+    auxContext = ''
+    if dirFunciones.exist_var(currentFunction, paramId):
+        auxContext = currentFunction
+    elif dirFunciones.exist_var(GLOBAL_CONTEXT, paramId):
+        auxContext = GLOBAL_CONTEXT
+    else:
+        print('Error. La variable ID = {} no existe en ninguna parte.'.format(paramId))
+        sys.exit()
+        return
+    if len(paramName) <= 6 or paramName[-5:-1] != ".csv":
+        print('Error. Se necesita un nombre de archivo de al menos un caracter con terminacion ".csv" para la funcion {}, se tiene nombre {}.'.format(specialFunction, paramName))
+        sys.exit()
+        return
+
+    dimsVar = dirFunciones.getDimensiones(auxContext, paramId)
+    typeVar = dirFunciones.search_varType(auxContext, paramId)
+    memVar = dirFunciones.search_memPos(auxContext, paramId) #Memoria base de X
+    if dimsVar[0] == 0: #El id que se recibio no es una variabl dimensionada
+        sys.exit("Error. Se esperaba una variable dimensionada para la funcion {}.".format(specialFunction))
+        return
+    tipoFunction = funcValida.get_tipo(specialFunction, 'string', typeVar)
+    if tipoFunction == 'error':
+        printTypeMismatch()
+    else:
+        #Se ocupa verificar que sea un arreglo o una matriz, para definir que tantos espacios checar
+        if dimsVar[1] > 0: #Es una matriz
+            #Quad(export csv, dirBase, 'nombre', 'col x reng')
+            strColReng = str(dimsVar[0]) + '/' + str(dimsVar[1])
+            printAuxQuad(specialFunction, memVar, paramName, strColReng)
+        else: #Es un arreglo
+            #Quad(export csv, dirBase, 'nombre', 'col')
+            printAuxQuad(specialFunction, memVar, paramName, dimsVar[0])
+
+def p_pnValidateExchange(p):
+    '''
+    pnValidateExchange :
+    '''
+    global currentFunction
+    global pEspeciales
+    global dirFunciones
+    specialFunction = pEspeciales.pop()
+    paramX = p[-3]
+    paramY = p[-1]
+    auxContextX = ''
+    auxContextY = ''
+    if dirFunciones.exist_var(currentFunction, paramY):
+        auxContextY = currentFunction
+    elif dirFunciones.exist_var(GLOBAL_CONTEXT, paramY):
+        auxContextY = GLOBAL_CONTEXT
+    else:
+        print('Error. La variable ID = {} no existe en ninguna parte.'.format(paramY))
+        sys.exit()
+        return
+    if dirFunciones.exist_var(currentFunction, paramX):
+        auxContextX = currentFunction
+    elif dirFunciones.exist_var(GLOBAL_CONTEXT, paramX):
+        auxContextX = GLOBAL_CONTEXT
+    else:
+        print('Error. La variable ID = {} no existe en ninguna parte.'.format(paramX))
+        sys.exit()
+        return
+
+    dimsVarX = dirFunciones.getDimensiones(auxContextX, paramX)
+    typeVarX = dirFunciones.search_varType(auxContextX, paramX)
+    memVarX = dirFunciones.search_memPos(auxContextX, paramX) #Memoria base de X
+    dimsVarY = dirFunciones.getDimensiones(auxContextY, paramY)
+    typeVarY = dirFunciones.search_varType(auxContextY, paramY)
+    memVarY = dirFunciones.search_memPos(auxContextY, paramY) #Memoria base de Y
+
+    #Hacer el intercambio de valores de una variable a otra, pudiendo ser variables dimensioandas de mismo tamaño
+    if dimsVarX[0] == 0: #X no es dimensionada
+        if dimsVarY[0] != 0: #Pero Y si es dimensionada
+            sys.exit("Error. Para la funcion {}, se necesitan dos variables de las mismas dimensiones.".format(specialFunction))
+            return
+        else: #X no es dim y Y tampoco
+            #Validar que sean del mismo tipo
+            tipoFunction = funcValida.get_tipo(specialFunction, typeVarX, typeVarY)
+            if tipoFunction == 'error':
+                printTypeMismatch()
+            else:
+                #Print quad(sp func, dirbase x, dir base y, 'single')
+                printAuxQuad(specialFunction, memVarX, memVarY, 'single')
+    else: #X si es dimensionada
+        if dimsVarX[0] != dimsVarY[0] or dimsVarX[1] != dimsVarY[1]: #Pero Y no es de la misma dimension
+            sys.exit("Error. Para la funcion {}, se necesitan dos variables de las mismas dimensiones.".format(specialFunction))
+            return
+        else: #Ambas son dimensionadas y de igual dimension
+            tipoFunction = funcValida.get_tipo(specialFunction, typeVarX, typeVarY)
+            if tipoFunction == 'error':
+                printTypeMismatch()
+            else:
+                #Print quad(sp func, dirbase x, dir base y, 'single')
+                auxStrCasillas = str(dimsVarX[0]) +'/' + str(dimsVarX[1])
+                printAuxQuad(specialFunction, memVarX, memVarY, auxStrCasillas)
 
 #Valida el caso especial de la funcion arrange, cuyos dos Full_EXP deben ser de tipo entero
 def p_pnValidateArrange(p):

@@ -48,7 +48,8 @@ class Jubilo_CuboSemantico_SFuncs:
             ( 'transpose' , 'int' , '' ) : 'int',
             ( 'transpose' , 'float', '') : 'float',
 
-            ( 'exportcsv' , 'string' , 'string' ) : 'bool',
+            ( 'exportcsv' , 'string' , 'int' ) : 'bool',
+            ( 'exportcsv' , 'string' , 'float' ) : 'bool',
 
             ( 'plothist' , 'int', 'int' ) : 'histogram',
             ( 'plothist' , 'float', 'int') : 'histogram',
@@ -57,18 +58,16 @@ class Jubilo_CuboSemantico_SFuncs:
             ( 'plotline' , 'int' , 'float' ) : 'line',
             ( 'plotline' , 'float' , 'float' ) : 'line',
             ( 'plotline' , 'float' , 'int' ) : 'line',
+            ( 'lineareg' , 'int' , 'int' ) : 'lineareg',
+            ( 'lineareg' , 'int' , 'float' ) : 'lineareg',
+            ( 'lineareg' , 'float' , 'float' ) : 'lineareg',
+            ( 'lineareg' , 'float' , 'int' ) : 'lineareg',
 
             #Se puede regresar vacio? Pregunta para mi yo del futuro. v
             #Tas bien guapo we. Para Hector del futuro cuando este triste
             ('exchange', 'int', 'int'): 'int',
             ('exchange', 'bool', 'bool'): 'bool',
             ('exchange', 'float', 'float'): 'float',
-
-            ( 'lineareg' , 'int' , 'int' ) : 'float',
-            ( 'lineareg' , 'int' , 'float' ) : 'float',
-            ( 'lineareg' , 'float' , 'float' ) : 'float',
-            ( 'lineareg' , 'float' , 'int' ) : 'float',
-
 
             #Para las funciones de random se considera que se validara que
             #ambos rangos vengan y se manden como enteros, antes de mandar a
