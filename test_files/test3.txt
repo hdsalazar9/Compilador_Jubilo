@@ -12,4 +12,23 @@ float k;
 uno(k,x);
 k = k + uno(x, y);
  return;
+
+func int fibo(int a){
+  print("Fibonaacci");
+  if(a == 1 || a == 0){
+    return a;
+  } else{
+    return fibo(a-2) + fibo(a-1);
+  };
+}
+
+void main(){
+  int x;
+  read(x);
+  while( x > 5){
+    print(fibo(x));
+    x = x -1;
+  };
+  return;
+
 }
