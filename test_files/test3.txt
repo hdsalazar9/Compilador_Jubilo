@@ -1,25 +1,15 @@
 program velocirraptor:
 
-float w[2];
 int x;
-float y[5][2];
+float y[2][4];
 
 func int uno(int a, int b){
-	if(a>0){
-	int i = a + b * i;
-	print(i + b);
-	uno(a-i, i);
-	}
-	else{
-	print(a + b);
-	};
-  return i;
+  return a + b;
 }
 
 void main(){
-read(x);
-int k;
-uno(1,2);
-k = uno(1,2);
+float k;
+uno(k,x);
+k = k + uno(x, y);
  return;
 }
