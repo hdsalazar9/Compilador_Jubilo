@@ -1,25 +1,20 @@
 program velocirraptor:
 
-float w[2];
-int x;
-float y[5][2];
-
-func int uno(int a, int b){
-	if(a>0){
-	int i = a + b * i;
-	print(i + b);
-	uno(a-i, i);
-	}
-	else{
-	print(a + b);
-	};
-  return i;
+func int fibo(int a){
+  print("Fibonaacci");
+  if(a == 1 || a == 0){
+    return a;
+  } else{
+    return fibo(a-2) + fibo(a-1);
+  };
 }
 
 void main(){
-read(x);
-int k;
-uno(1,2);
-k = uno(1,2);
- return;
+  int x;
+  read(x);
+  while( x > 5){
+    print(fibo(x));
+    x = x -1;
+  };
+  return;
 }

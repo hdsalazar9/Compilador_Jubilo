@@ -5,6 +5,7 @@
 import ply.lex as lex
 import ply.yacc as yacc
 import sys
+import csv
 from Jubilo_CuboSemantico import *
 from Jubilo_CuboSemantico_SFuncs import *
 from Jubilo_DirFunc import *
@@ -75,7 +76,6 @@ acumuladoR = 1 #ira acumulando valor para ser m0
 dirBase = 0 #guarda la direccion base de una variable dimensionada (Que es igual al limite inferior)
 currentConsForArray = [] #acumulara las constantes de asignacion para un arreglo
 
-
 '''
 Funciones para simular y manejar pilas (push, pop, top)
 '''
@@ -87,7 +87,7 @@ def popOperandos():
 def popOperadores():
     global pOperadores
     return pOperadores.pop()
-#
+#Tome el ultimo elemento de la Pila de memorias
 def popMemorias():
     global pMemorias
     return pMemorias.pop()
@@ -324,7 +324,6 @@ def nextTemporalAvail(tipo):
             cont_IntTemp = cont_IntTemp + 1
         else:
             printErrorOutOfBounds('temporales','Enteras')
-
     elif tipo == 'float':
         if cont_FloatTemp < index_floatTemporales:
             avail = cont_FloatTemp
@@ -372,7 +371,6 @@ def pushConstant(constante):
         pushOperando(constante)
         pushMemoria(dict_Int[constante])
         pushTipo('int')
-
     elif type(constante) == float:
         if constante not in dict_Float:
             if cont_FloatConst < index_floatConstantes:
@@ -384,13 +382,12 @@ def pushConstant(constante):
         pushOperando(constante)
         pushMemoria(dict_Float[constante])
         pushTipo('float')
-
     elif type(constante) == str:
         if constante == 'true':
             pushOperando(constante)
             pushMemoria(index_stringConstantes)
             pushTipo('bool')
-        if constante == 'false':
+        elif constante == 'false':
             pushOperando(constante)
             pushMemoria(index_stringConstantes + 1)
             pushTipo('bool')
@@ -494,9 +491,14 @@ def printQuadsInFormat():
     #print("pOepradres: ",pOperadores)
     print("##### Cuadruplos al momento: #####")
     count = 0
+    file = open("obejota.jub","w+")
     for quad in arregloQuads:
         print("{}.\t{},\t{},\t{},\t{}".format(count,quad[0],quad[1],quad[2],quad[3]))
         count = count + 1
+
+        file.write(str(quad) + '\n')
+    file.close()
+    print("##### YAY, compilado #####")
 
 #List of language tokens
 tokens = [
@@ -554,7 +556,7 @@ def t_INT_CTE(t):
     return t
 
 def t_STRING_CTE(t):
-    r'\"[a-zA-Z0-9_\.]*\"'
+    r'\"[a-zA-Z0-9_\.\_]*\"'
     t.value = str(t.value)
     return t
 
@@ -848,15 +850,13 @@ def p_func_call(p):
 
 def p_func(p):
     '''
-    func : ID LPAREN pnQuadEra params RPAREN pnQuadGoSub
+    func : ID LPAREN pnQuadGenExp6 pnQuadEra params RPAREN pnQuadGenExp7 pnQuadGoSub
     '''
 
 def p_func2(p):
     '''
-    func2 : ID LPAREN pnQuadEra params RPAREN pnQuadGoSub2
+    func2 : ID LPAREN pnQuadGenExp6 pnQuadEra params RPAREN pnQuadGenExp7 pnQuadGoSub2
     '''
-
-
 
 def p_params(p):
     '''
@@ -984,7 +984,7 @@ def p_factor(p):
 
 def p_retorno(p):
     '''
-    retorno : RETURN full_exp pnQuadRetorno SEMIC
+    retorno : RETURN pnQuadGenExp6 full_exp pnQuadGenExp7 pnQuadRetorno SEMIC
             | RETURN pnQuadRetorno SEMIC
     '''
 
@@ -1682,7 +1682,8 @@ def p_pnQuadEra(p):
     global pFunciones
     global pArgumentos
 
-    function = p[-2] #toma el nombre de la funcion
+    function = p[-3] #toma el nombre de la funcion
+    print("HUEVOOOOS", function)
     # 1. Verify that the procedure exists into the DirFunc
     if function in dirFunciones.diccionario:
         pFunciones.append(function) #añade la funcion a la pila de funciones
@@ -1693,7 +1694,7 @@ def p_pnQuadEra(p):
         #print(pArgumentos)
 
     else:
-        print('ERROR. Function not declared')
+        print('ERROR. Funcion {} no declarada.'.format(function))
         sys.exit()
         return
 
@@ -1721,11 +1722,13 @@ def p_pnAgregaParam(p):
         if lista[args-1] == argumentType:
             printAuxQuad('PARAMETER', argumentMem, '', param)
         else:
-            print("Error, los parametros no coinciden")
+            print("Error, El parametro {} no coinciden en la funcion {}".format(param, function))
+            sys.exit()
+            return
     else:
         print("Error, demasiados argumentos")
         sys.exit()
-
+        return
     pFunciones.append(function)
 
 
@@ -1740,10 +1743,11 @@ def p_pnQuadGoSub(p):
     # 5. Verify that the last parameter points to null
     if args == dirFunciones.diccionario[function]['cantParametros']:
         # 6. Generate action GOSUB, procedure-name, '', initial address
-        printAuxQuad('GOSUB', function, '', nextQuad()+1)
-        #printAuxQuad('GOSUB', function, nextQuad()+1, dirFunciones.diccionario[function][3])
+        #printAuxQuad('GOSUB', function, nextQuad()+1, dirFunciones.diccionario[function][3
+        quadStartFunc = dirFunciones.diccionario[function]['quadCont']
+        printAuxQuad('GOSUB', function, nextQuad()+1, quadStartFunc)
     else:
-        print ('ERROR. Argument mysmatch')
+        print ('ERROR. La cantidad de argumentos no es la esperada para la funcion {}.'.format(function))
         sys.exit()
         return
 
@@ -1755,18 +1759,28 @@ def p_pnQuadGoSub2(p):
     global pArgumentos
     args = pArgumentos.pop()
     function = pFunciones.pop()
-    resultadoTemporal = pOperandos.pop()
+
+    if not dirFunciones.exist_function(function):
+        print('Error. La funcion {} no existe en el directorio de funciones'.format(function))
+        sys.exit()
+        return
+
+    tipoFunction = dirFunciones.diccionario[function]['tipo'];
+    memFunction = nextTemporalAvail(tipoFunction) #Crear una variable temporal donde guardar el resultado de la funcino
     # 5. Verify that the last parameter points to null
     if args == dirFunciones.diccionario[function]['cantParametros']:
         # 6. Generate action GOSUB, procedure-name, '', initial address
         quadStartFunc = dirFunciones.diccionario[function]['quadCont']
         #(GOSUB, nombre de funcion, cuadruplo para saber a donde regresar, cuadruplo donde empieza el codigo de la fx )
         printAuxQuad('GOSUB', function, nextQuad()+1, quadStartFunc)
-        printAuxQuad('=', function, '', resultadoTemporal)
-        pushOperando(resultadoTemporal)
-        #printAuxQuad('GOSUB', function, nextQuad()+1, dirFunciones.diccionario[function][3])
+        #General quad con asignar el resultado de la func en un temporal
+        printAuxQuad('=', function, '', memFunction)
+        #Pushear a las pilas el resultado temporal de la Funcion
+        pushOperando(function)
+        pushMemoria(memFunction)
+        pushTipo(tipoFunction)
     else:
-        print ('ERROR. Argument mysmatch')
+        print ('ERROR. La cantidad de argumentos no es la esperada para la funcion {}.'.format(function))
         sys.exit()
         return
 
@@ -1794,10 +1808,6 @@ def p_pnQuadRetorno(p):
         if dirFunciones.diccionario[currentFunction]['tipo'] == tipoRet:
             printAuxQuad('RETURN', '', '', memRet)
             yaSeRetorno = True
-            #Push de cuando se regresa un valor
-            pushOperando(operandoRet)
-            pushMemoria(memRet)
-            pushTipo(tipoRet)
         else:
             #Si no es correcto los tipos, se genera un error
             printReturnError()
@@ -1983,12 +1993,12 @@ def p_pnValidateSortTranspose(p):
         if tipoFunction == 'error':
             printTypeMismatch()
         else:
-            #Quad(Sort, de donde empieza el arreglo, cuanto dura el arreglo o matriz, donde guardarlo)
+            #Quad(Sort, de donde empieza el arreglo, cuanto dura el arreglo o matriz)
             if dimsVar[1] == 0: #No Es matriz
-                printAuxQuad(specialFunction, memVar, dimsVar[0], memVar)
-            else: #si es matriz
+                printAuxQuad(specialFunction, memVar, dimsVar[0], '')
+            else: #si es matriz, mandar un quad con sort, donde empieza el arreglo, columnas, renglones
                 auxCasillas = dimsVar[0] * dimsVar[1]
-                printAuxQuad(specialFunction, memVar, auxCasillas, memVar)
+                printAuxQuad(specialFunction, memVar, dimsVar[0], dimsVar[1])
 
 #Punto neuralgico para desplegar un histograma en base a un arreglo de datos y una constante entera #bins
 def p_pnValidatePlotHist(p):
@@ -2215,6 +2225,8 @@ def p_pnValidateArrange(p):
             updateMemoryPointer(currentFunction, tipoFunction, memToReclaim - 1)
         else:
             print('Error. El limite superior debe ser mayor al limite inferior')
+            sys.exit()
+            return
     currentVar = ''
     #currentType = ''
 
@@ -2602,9 +2614,6 @@ def p_pnAddSpecialFunctionVar(p):
     global currentVar
     #currentType = p[-4] #tipo variable special func
     currentVar = p[-3] #id variable special func
-
-
-
 
 #Defining Lexer & Parser
 parser = yacc.yacc()
