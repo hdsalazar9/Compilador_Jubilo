@@ -45,6 +45,7 @@ dict_String = {}
 '''
 Constantes
 '''
+obejotaName = 'obejota.jub'
 GLOBAL_CONTEXT = 'globals'
 OPERADORES_SUMARESTA = ['+','-']
 OPERADORES_MULTDIV = ['*','/']
@@ -487,7 +488,7 @@ def printQuadsInFormat():
     #print("pOepradres: ",pOperadores)
     print("##### Cuadruplos al momento: #####")
     count = 0
-    file = open("obejota.jub","w+")
+    file = open(obejotaName,"w+")
     for quad in arregloQuads:
         print("{}.\t{},\t{},\t{},\t{}".format(count,quad[0],quad[1],quad[2],quad[3]))
         count = count + 1
@@ -658,6 +659,7 @@ def p_programa(p):
     programa : PROGRAM ID COLON vars_loop pnGotoMain function main
     '''
     print("Programa \"", p[2], "\" terminado.")
+    printAuxQuad('ENDPROGRAM', p[2], '', '') #Se agrega un cuadruplo para indicar que acabo el programa
     printQuadsInFormat()
 
 #Declaracion de variables, puede ser recursivo y declarar varias variables
@@ -2614,24 +2616,18 @@ parser = yacc.yacc()
 lexer = lex.lex()
 
 '''
-Para probar el parser desde archivo
+MAIN EJECUCION
 '''
 name = './test_files/test3.txt'
+
+#Num of arguments para ejecucion
+arguments = len(sys.argv) - 1
+if arguments >= 1:
+    name = sys.argv[1]
+if arguments == 2:
+    obejotaName = sys.argv[2]
 
 with open(name, 'r') as archive:
     s = archive.read()
 print(name)
 parser.parse(s)
-
-'''
-#Testing of parser
-while True:
-
-    #Input of lines of code
-    print("Jubilo >")
-    try:
-        s = input("> ")
-    except EOFError:
-        break
-    parser.parse(s)
-'''

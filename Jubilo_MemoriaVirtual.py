@@ -21,6 +21,7 @@ class MemoriaVirtual:
     en el diccionario de tipo (type) en la funcion actual
     '''
     def fillMemory(self, memory, type, value):
+        #print("Se quiere hacer fill de: '{}' y '{}'".format(type,memory))
         self.diccionario[type][memory] = value
     '''
     Funcion para retornar el valor de un espacio de memoria(memory) de una
