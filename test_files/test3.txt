@@ -1,5 +1,18 @@
 program velocirraptor:
 
+int x;
+float y[2][4];
+
+func int uno(int a, int b){
+  return a + b;
+}
+
+void main(){
+float k;
+uno(k,x);
+k = k + uno(x, y);
+ return;
+
 func int fibo(int a){
   print("Fibonaacci");
   if(a == 1 || a == 0){
@@ -17,4 +30,5 @@ void main(){
     x = x -1;
   };
   return;
+
 }
