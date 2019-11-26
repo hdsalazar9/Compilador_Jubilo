@@ -5,7 +5,6 @@
 import ply.lex as lex
 import ply.yacc as yacc
 import sys
-import csv
 from Jubilo_CuboSemantico import *
 from Jubilo_CuboSemantico_SFuncs import *
 from Jubilo_DirFunc import *
@@ -151,7 +150,7 @@ Manejo de memoria para la funcion nextTemporalAvail: toma el siguiente temporal 
 la pila para la generacion de cuadruplos
 '''
 
-BATCH_SIZE = 100 #tamano del espacio de memoria entre diferentes tipos de datos
+BATCH_SIZE = 1000 #tamano del espacio de memoria entre diferentes tipos de datos
 
 '''
 Espacios de memoria:
@@ -185,15 +184,12 @@ Espacios de memoria:
 index_intGlobales = BATCH_SIZE
 index_floatGlobales = index_intGlobales + BATCH_SIZE
 index_boolGlobales = index_floatGlobales + BATCH_SIZE
-
 index_intLocales = index_boolGlobales + BATCH_SIZE
 index_floatLocales = index_intLocales + BATCH_SIZE
 index_boolLocales = index_floatLocales + BATCH_SIZE
-
 index_intTemporales = index_boolLocales + BATCH_SIZE
 index_floatTemporales = index_intTemporales + BATCH_SIZE
 index_boolTemporales = index_floatTemporales + BATCH_SIZE
-
 index_intConstantes = index_boolTemporales + BATCH_SIZE
 index_floatConstantes = index_intConstantes + BATCH_SIZE
 index_stringConstantes = index_floatConstantes + BATCH_SIZE
@@ -513,7 +509,7 @@ tokens = [
     'ARRANGE','ZEROS','ONES','SUM','FACT', #funciones especiales
     'MEAN','MEDIAN','MODE','STDEV','VAR', #funciones especiales
     'COVARIANCE','CORRELATION', 'SORT','TRANSPOSE', #funciones especiales
-    'READCSV','EXPORTCSV', 'PLOTHIST','PLOTLINE', #funciones especiales
+    'EXPORTCSV', 'PLOTHIST','PLOTLINE', #funciones especiales
     'EXCHANGE','LINEAREG', 'RANDINT','RANDFLOAT', #funciones especiales
     'FLOAT_CTE','INT_CTE','BOOL_CTE','STRING_CTE', #constantes
     'NEW_LINE'
@@ -628,8 +624,6 @@ def t_ID(t):
         t.type = 'COVARIANCE'
     elif t.value == 'correlation':
         t.type = 'CORRELATION'
-    elif t.value == 'readcsv':
-        t.type = 'READCSV'
     elif t.value == 'exportcsv':
         t.type = 'EXPORTCSV'
     elif t.value == 'plothist':

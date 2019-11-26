@@ -1,23 +1,177 @@
-from Jubilo_LexPar import *
+#Hector David Salazar Schz, A01207471.
+#Melanie Vielma Saldana, A00818905.
+#Diseno de compiladores Ago-Dic 2019. ITESM.
+#Jubilo
+import sys
 
-obejota = open('')
+from Jubilo_MemoriaVirtual import *
+
+#### Inicializacion de objetos de memoria para global y main ####
+CONST_STRING_GLOBALES ='globales'
+CONST_STRING_LOCALES = 'locales'
+CONST_STRING_TEMPORALES = 'temporales'
+CONST_STRING_CONSTANTES = 'constantes'
+GLOBAL_CONTEXT = 'globals'
+MAIN_CONTEXT = 'main'
+m_Global = MemoriaVirtual(GLOBAL_CONTEXT)
+m_Main = MemoriaVirtual(MAIN_CONTEXT)
+
+### Inicializacion de variables para maquina virtual ###
+obejota = open('./obejota.jub')
 quadList = [] #almacena cuadruplos despues de lectura de obejota
+quadIndex = 0 #almacena el index del cuadruplo que se esta ejecutando en este momento
+quad = () #Almacena el objeto del cuadruplo que se esta ejecutando en este momento
+valoresRetorno = [] #Pila para acumular los valores de retorno de las funciones de usuario
+pilaGosub = [] #Pila para las llamadas de funciones de usuario, saber a donde regresar
+
+
+#Pila de ejecucion de memorias
+pilaEjecucion = []
+pilaTemporal = []
+currentEjecucion = ''
+#Push/pop para pilas
+def pushMemEjecucion(memoria):
+	global pilaEjecucion
+	pilaEjecucion.append(memoria)
+def popMemEjecucion():
+	global pilaEjecucion
+	return pilaEjecucion.pop()
+
+def pushMemTemporal(memoria):
+	global pilaTemporal
+	pilaTemporal.append(memoria)
+def popMemTemporal():
+	global pilaTemporal
+	return pilaTemporal.pop()
+
+def pushValRetorno(val):
+	global valoresRetorno
+	valoresRetorno.append(val)
+def popValRetorno():
+	global valoresRetorno
+	return valoresRetorno.pop()
+
+def pushGosub(val):
+	global pilaGosub
+	pilaGosub.append(val)
+def popGosub(val):
+	global pilaGosub
+	return pilaGosub.pop()
+
+pushMemEjecucion(m_Main)
+
+BATCH_SIZE = 1000 #tamano del espacio de memoria entre diferentes tipos de datos
+'''
+Espacios de memoria:
++++++++++++++++++++++++
++globales enteras     + batch_size
++---------------------+
++globales flotantes   + batch_size
++---------------------+
++globales booleanas   + batch_size
++++++++++++++++++++++++
++locales enteras      + batch_size
++---------------------+
++locales flotantes    + batch_size
++---------------------+
++locales booleanas    + batch_size
++++++++++++++++++++++++
++temp enteras         + batch_size
++---------------------+
++temp flotantes       + batch_size
++---------------------+
++temp booleanas       + batch_size
++++++++++++++++++++++++
++constantes enteras   + batch_size
++---------------------+
++constantes flotantes + batch_size
++---------------------+
++constantes string    + batch_size
++++++++++++++++++++++++
+'''
+#Declaracion de inicio de espacio de memoria por tipo de memoria
+index_intGlobales = BATCH_SIZE
+index_floatGlobales = index_intGlobales + BATCH_SIZE
+index_boolGlobales = index_floatGlobales + BATCH_SIZE
+index_intLocales = index_boolGlobales + BATCH_SIZE
+index_floatLocales = index_intLocales + BATCH_SIZE
+index_boolLocales = index_floatLocales + BATCH_SIZE
+index_intTemporales = index_boolLocales + BATCH_SIZE
+index_floatTemporales = index_intTemporales + BATCH_SIZE
+index_boolTemporales = index_floatTemporales + BATCH_SIZE
+index_intConstantes = index_boolTemporales + BATCH_SIZE
+index_floatConstantes = index_intConstantes + BATCH_SIZE
+index_stringConstantes = index_floatConstantes + BATCH_SIZE
+#index_boolConstantes = index_stringConstantes = true
+#index_boolConstantes = index_stringConstantes + 1 = false
 
 '''
 Funcion que regresa el tipo de dato encontrado en el cuadruplo segun la direccion de memoria
 '''
-def getTipo(address):
-	tipo = 'none'
-	address = int(address)
-	return tipo
+def getType(mem):
+	type = ''
+	if (mem >= 0 and mem < index_intGlobales) or (mem >= index_boolGlobales and mem < index_intLocales)
+	or (mem >= index_boolLocales and mem < index_intTemporales) or (mem >= index_boolTemporales and mem < index_intConstantes):
+		type = 'int'
+	if (mem >= index_boolGlobales and mem < index_floatGlobales) or (mem >= index_intLocales and mem < index_floatLocales)
+	or (mem >= index_intTemporales and mem < index_floatTemporales) or (mem >= index_intConstantes and mem < index_floatConstantes):
+		type = 'float'
+	if (mem >= index_floatGlobales and mem < index_boolGlobales) or (mem >= index_floatLocales and mem < index_boolLocales)
+	or (mem >= index_floatTemporales and mem < index_boolTemporales) or mem == index_stringConstantes or mem == (index_stringConstantes+1):
+		type = 'bool'
+	if (mem >= index_floatConstantes and mem < index_stringConstantes):
+		type = 'string'
+	return type
+
+def getSection(mem):
+	section = ''
+	if (mem >= 0 and mem < index_boolGlobales):
+		section = CONST_STRING_GLOBALES
+	if (mem >= index_boolGlobales and mem < index_boolLocales):
+		section = CONST_STRING_LOCALES
+	if (mem >= index_boolLocales and mem < index_boolTemporales):
+		section = CONST_STRING_TEMPORALES
+	if (mem >= index_boolTemporales and mem <= (index_stringConstantes + 1)):
+		section = CONST_STRING_GLOBALES #Guardaremos las constantes en el contexto de globales
 
 '''
 Funcion que regresa el valor del dato encontrado en el cuadruplo segun la direccion de memoria
 '''
-def getValor(current, tipo, address):
-	valor = 0
-	return valor
+def getValor(objMemVirt, memoryAddress, memoryType):
+	global m_Global
+	memoryType = str(memoryType)
+	auxValor = -1
+	auxSection = getSection(memoryAddress) #Saber por la memoria a que contexto pertenece global o local
+	if auxSection == CONST_STRING_GLOBALES:
+		try: #Obtener el valor de la memoria actual (objMemVirt)
+			auxValor = m_Global.getValueFromMemory(str(memoryAddres), memoryType)
+		except:
+			print("Error. Se quiere acceder a una variable no inicializada.")
+			sys.exit()
+	elif auxSection == CONST_STRING_LOCALES:
+		try:
+			auxValor = objMemVirt.getValueFromMemory(str(memoryAddres), memoryType)
+		except:
+			print("Error. Se quiere acceder a una variable no inicializada.")
+			sys.exit()
+	else:
+		print("Error fatal. No se encuentra esa seccion de memoria.")
+		sys.exit()
 
+'''
+Funcion que llena un espacio de memoria con un valor
+'''
+def fillValor(objMemVirt, memoryAddres, memoryType, value):
+	global m_Global
+	memoryType = str(memoryType)
+	auxSection = getSection(memoryAddres)
+	if auxSection == CONST_STRING_GLOBALES: #anadir el valor a globales
+		m_Global.fillMemory(memoryAddres, memoryType, value)
+	elif auxSection == CONST_STRING_LOCALES: #anadir el valor a locales
+		objMemVirt.fillMemory(memoryAddres, memoryType, value)
+	else:
+		print("Error fatal. No se encuentra esa seccion de memoria.")
+		sys.exit()
 
 '''
 Funcion principal de la maquina virtual
@@ -25,22 +179,26 @@ Ejecuta los cuadruplos que lee del archivo obejota : codigo objeto
 '''
 def ejecucion():
 	global quad
+	global quadList
 	global retorno
+	global currentEjecucion
 
+	currentEjecucion = popMemEjecucion();
+	quad = quadList[quadIndex]
 
 	'''
-	Receta de cocina para leer cuadruplo: 
+	Receta de cocina para leer cuadruplo:
 	1. Obtiene los tipos de datos de los dos operandos
 	2. Obtiene el valor de los dos operandos
 	3. Condicionales para los datos validos, convierte el operador al tipo de dato que es
 	4. hace la operacion del cuadruplo
 	'''
 	if quad[0] == '+':
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
-
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
+		#Castea el valor encontrado en la direccion de currentEjecucion al tipo que le corresponde
 		if tipo1 == 'int':
 			op1 = int(op1)
 		if tipo2 == 'int':
@@ -50,13 +208,14 @@ def ejecucion():
 		if tipo2 == 'float':
 			op2 = float(op2)
 		res = op1 + op2
+		fillValor(currentEjecucion, quad[3], getType(quad[3]), res)
 
 	if quad[0] == '-':
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
-
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
+		#Castea el valor encontrado en la direccion de currentEjecucion al tipo que le corresponde
 		if tipo1 == 'int':
 			op1 = int(op1)
 		if tipo2 == 'int':
@@ -68,10 +227,10 @@ def ejecucion():
 		res = op1 - op2
 
 	if quad[0] == '*':
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 
 		if tipo1 == 'int':
 			op1 = int(op1)
@@ -84,10 +243,10 @@ def ejecucion():
 		res = op1 * op2
 
 	if quad[0] == '/':
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 
 		if tipo1 == 'int':
 			op1 = int(op1)
@@ -102,18 +261,18 @@ def ejecucion():
 	if quad[0] == '=':
 		auxValor = 0
 		try:
-			auxTipo = getTipo(quad[1])
+			auxTipo = getType(quad[1])
 			int(quad[1])
-			auxValor = getValor(memoria, auxTipo, quad[1])
-		except: 
-			auxTipo = getTipo(quad[3])
+			auxValor = getValor(currentEjecucion, auxTipo, quad[1])
+		except:
+			auxTipo = getType(quad[3])
 			auxValor = retorno.pop()
 
-	if quad[0] == '<'
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+	if quad[0] == '<':
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 
 		if tipo1 == 'int':
 			op1 = int(op1)
@@ -126,13 +285,13 @@ def ejecucion():
 		if op1 < op2:
 			res = True
 		else:
-			res = False 
+			res = False
 
-	if quad[0] == '>'
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+	if quad[0] == '>':
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 
 		if tipo1 == 'int':
 			op1 = int(op1)
@@ -147,11 +306,11 @@ def ejecucion():
 		else:
 			res = False
 
-	if quad[0] == '<='
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+	if quad[0] == '<=':
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 
 		if tipo1 == 'int':
 			op1 = int(op1)
@@ -166,11 +325,11 @@ def ejecucion():
 		else:
 			res = False
 
-	if quad[0] == '>='
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+	if quad[0] == '>=':
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 
 		if tipo1 == 'int':
 			op1 = int(op1)
@@ -185,11 +344,11 @@ def ejecucion():
 		else:
 			res = False
 
-	if quad[0] == '=='
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+	if quad[0] == '==':
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 
 		if tipo1 == 'int':
 			op1 = int(op1)
@@ -204,11 +363,11 @@ def ejecucion():
 		else:
 			res = False
 
-	if quad[0] == '!='
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+	if quad[0] == '!=':
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 
 		if tipo1 == 'int':
 			op1 = int(op1)
@@ -224,24 +383,25 @@ def ejecucion():
 			res = False
 
 	if quad[0] == '||':
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 		if op1 == op2 and op1 == False and op2 == False:
 			res = False
 		else:
 			res = True
 
 	if quad[0] == '&&':
-		tipo1 = getTipo(quad[1])
-		tipo2 = getTipo(quad[2])
-		op1 = getValor(memoria, tipo1, quad[1])
-		op2 = getValor(memoria, tipo2, quad[2])
+		tipo1 = getType(quad[1])
+		tipo2 = getType(quad[2])
+		op1 = getValor(currentEjecucion, tipo1, quad[1])
+		op2 = getValor(currentEjecucion, tipo2, quad[2])
 		if op1 == op2 and op1 == True:
 			res = True
 		else:
 			res = False
+
 
 '''
 Lee el archivo obejota. EJEMPLO (+,a,b,t1) -> +,a,b,t1
@@ -252,24 +412,11 @@ python split syntax -> string.split('separator')
 for line in obejota:
 	line = line.replace('(','')
 	line = line.replace(')','')
+	line = line.replace('\n','')
+	line = line.replace('\'','')
+
 	quad = tuple(line.split(','))
 	auxQuad = (1,1,1,1)
-	try:
-		auxQuad[0] = int(float(quad[0]))
-	except:
-		pass
-	try:
-		auxQuad[1] = int(float(quad[1]))
-	except:
-		pass
-	try: 
-		auxQuad[2] = int(float(quad[2]))
-	except:
-		pass
-	try:
-		auxQuad[3] = int(float(quad[3]))
-	except:
-		pass
 	quad = (quad[0], quad[1], quad[2], quad[3])
 	quadList.append(quad)
 

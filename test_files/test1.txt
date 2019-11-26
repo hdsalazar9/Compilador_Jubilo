@@ -1,25 +1,5 @@
 program pato:
 
-int a = 0;
-int b = a + 2;
-float c = 2.3  * 5.2;
-
-func void uno(){
-int cont = 1;
-
-return;
-}
-
-func void dos(int alfa, int beta){
-int resultado;
-resultado = alfa * beta;
-
-}
-
 void main(){
-
-	float d;
-	d = a + a;
-	dos(a,b);
-	return;
+	int x = 2 + 2;
 }
