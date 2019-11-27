@@ -3,6 +3,10 @@
 #Diseno de compiladores Ago-Dic 2019. ITESM.
 #Jubilo
 import sys
+import numpy as np
+import statistics as stats
+import math
+import matplotlib.pyplot as plt
 
 from Jubilo_MemoriaVirtual import *
 
@@ -50,6 +54,12 @@ def pushMemTemporal(memoria):
 def popMemTemporal():
 	global pilaTemporal
 	return pilaTemporal.pop()
+def topMemTemporal():
+	global pilaTemporal
+	last = len(pilaTemporal) - 1
+	if (last < 0):
+		return 'empty'
+	return pilaTemporal[last]
 
 def pushValRetorno(val):
 	global valoresRetorno
@@ -61,7 +71,7 @@ def popValRetorno():
 def pushGosub(val):
 	global pilaGosub
 	pilaGosub.append(val)
-def popGosub(val):
+def popGosub():
 	global pilaGosub
 	return pilaGosub.pop()
 
@@ -158,24 +168,26 @@ Funcion que regresa el valor del dato encontrado en el cuadruplo segun la direcc
 def getValor(objMemVirt, memoryAddress, memoryType):
 	global m_Global
 	#Checar si la memoryAddress se trata de una referencia a otra mem memoryAddress
-	if memoryAddress[0] == '{' and memoryAddress[-1] == '}':
-		memoryAddress = getValor(objMemVirt, memoryAddress[1:-1], getType(memoryAddress[1:-1]))
-		memoryType = getType(memoryAddress)
-	memoryType = str(memoryType)
+	try:
+		if memoryAddress[0] == '{' and memoryAddress[-1] == '}':
+			memoryAddress = getValor(objMemVirt, memoryAddress[1:-1], getType(memoryAddress[1:-1]))
+			memoryType = getType(memoryAddress)
+	except:
+		pass
 	auxValor = -1
 	auxSection = getSection(memoryAddress) #Saber por la memoria a que contexto pertenece global o local
 	if auxSection == CONST_STRING_GLOBALES:
 		try: #Obtener el valor de la memoria actual (objMemVirt)
 			auxValor = m_Global.getValueFromMemory(str(memoryAddress),str(memoryType))
 		except:
-			print("Unexpected error:", sys.exc_info()[0])
+			print("Unexpected error:", sys.exc_info()[0], quadIndex)
 			print("Error. Se quiere acceder a una variable no inicializada.",auxSection,memoryAddress, quadIndex)
 			sys.exit()
 	elif auxSection == CONST_STRING_LOCALES:
 		try:
 			auxValor = objMemVirt.getValueFromMemory(str(memoryAddress), str(memoryType))
 		except:
-			print("Unexpected error:", sys.exc_info()[0])
+			print("Unexpected error:", sys.exc_info()[0], quadIndex)
 			print("Error. Se quiere acceder a una variable no inicializada.",auxSection,memoryAddress, quadIndex)
 			sys.exit()
 	else:
@@ -189,9 +201,12 @@ Funcion que llena un espacio de memoria con un valor
 '''
 def fillValor(objMemVirt, memoryAddress, memoryType, value):
 	global m_Global
-	if memoryAddress[0] == '{' and memoryAddress[-1] == '}': #Saber por la memoria a que contexto pertenece global o local
-		memoryAddress = getValor(objMemVirt, memoryAddress[1:-1], getType(memoryAddress[1:-1]))
-		memoryType = getType(memoryAddress)
+	try:
+		if memoryAddress[0] == '{' and memoryAddress[-1] == '}': #Saber por la memoria a que contexto pertenece global o local
+			memoryAddress = getValor(objMemVirt, memoryAddress[1:-1], getType(memoryAddress[1:-1]))
+			memoryType = getType(memoryAddress)
+	except:
+		pass
 	memoryType = str(memoryType)
 	auxSection = getSection(memoryAddress)
 	if auxSection == CONST_STRING_GLOBALES: #anadir el valor a globales
@@ -235,6 +250,7 @@ def ejecucion():
 	elif quad[0] == 'GOTOF':
 		tipo1 = getType(quad[1])
 		auxBool = getValor(currentEjecucion, quad[1], tipo1)
+		#print("Deberia de hacer gotof",auxBool)
 		if not auxBool: #si si evalua en falso, ir al quad que diga el [3]
 			nextQuadIndex = int(quad[3])
 	#Adding de Constantes a la memoria de global
@@ -324,7 +340,7 @@ def ejecucion():
 			auxTipo = getType(quad[1])
 			auxValor = getValor(currentEjecucion, quad[1], auxTipo)
 		except:
-			print("Unexpected error:", sys.exc_info()[0])
+			#print("Unexpected error:", sys.exc_info()[0], quadIndex)
 			auxTipo = getType(quad[3])
 			auxValor = valoresRetorno.pop()
 		fillValor(currentEjecucion, quad[3], auxTipo, auxValor)
@@ -485,7 +501,7 @@ def ejecucion():
 					else:
 						tipo1 = 'string'
 				except:
-					print("Unexpected error:", sys.exc_info()[0])
+					print("Unexpected error:", sys.exc_info()[0], quadIndex)
 		if tipo1 == getType(quad[1]):
 			fillValor(currentEjecucion, quad[1], getType(quad[1]), op1)
 		else:
@@ -503,7 +519,6 @@ def ejecucion():
 			op1 = getValor(currentEjecucion, quad[1], tipo1)
 			tipo2 = getType(auxQuad[1])
 			op2 = getValor(currentEjecucion, auxQuad[1], tipo2)
-
 			try: #Verificar los limites
 				op1 = int(op1)
 				op2 = int(op2)
@@ -512,7 +527,7 @@ def ejecucion():
 				lim_inf2 = int(auxQuad[2])
 				lim_sup2 = int(auxQuad[3])
 			except:
-				print("Unexpected error:", sys.exc_info()[0])
+				print("Unexpected error:", sys.exc_info()[0], quadIndex)
 				sys.exit()
 				return
 			if op1 < lim_inf1 or op1 >= lim_sup1:
@@ -533,7 +548,7 @@ def ejecucion():
 				lim_inf = int(quad[2])
 				lim_sup = int(quad[3])
 			except:
-				print("Unexpected error:", sys.exc_info()[0])
+				print("Unexpected error:", sys.exc_info()[0], quadIndex)
 				sys.exit()
 				return
 			if op1 < lim_inf or op1 >= lim_sup: #No esta dentro de los indices
@@ -553,6 +568,247 @@ def ejecucion():
 			print("Error en el acomodo de los cuadruplos...")
 			sys.exit()
 			return
+	#Quadruplos de funciones de usuario
+	elif quad[0] == 'GOSUB':
+		currentEjecucion = popMemTemporal()
+		pushMemEjecucion( currentEjecucion )
+		pushGosub(quad[2]) #Saber a donde regresar despues
+		nextQuadIndex = int(quad[3]) #Ir a ejecutar esa funcion dentro de los cuadruplos
+	elif quad[0] == 'ERA':
+		#Agregar una nueva memoria a la pila de memorias
+		nameFunc = str(quad[1])
+		newMemory = MemoriaVirtual(nameFunc)
+		pushMemTemporal(newMemory)
+	elif quad[0] == 'ENDPROC':
+		popMemEjecucion() #Ya se acabo de procesar esa funcion
+		nextQuadIndex = int(popGosub())
+	elif quad[0] == 'RETURN':
+		if quad[3] != '':
+			auxOp = getValor(currentEjecucion, quad[3], getType(quad[3]))
+			pushValRetorno(auxOp)
+		popMemEjecucion()
+		nextQuadIndex = int(popGosub());
+	elif quad[0] == 'PARAMETER':
+		#Los parametros son las primeras casillas de una funcion entonces
+		#asignar en las primeras casillas de variables los parametros
+		parameterType = getType(quad[1])
+		parameterVal = getValor(currentEjecucion, quad[1], parameterType)
+		#Memoria temporal de la funcion a donde se mandan los parametros
+		auxMem = topMemTemporal()
+		#Vars locales empiezan en index = index_boolGlobales
+		#Obtener en donde guardar el parametro
+		parameterMem = auxMem.nextToSaveParam(parameterType, index_boolGlobales, BATCH_SIZE)
+		fillValor(auxMem, parameterMem, getType(parameterMem), parameterVal)
+
+	#Quadruplos de Funciones especiales de Jubilo
+	elif quad[0] == 'fact':
+		tipo = getType(quad[1])
+		param = getValor(currentEjecucion, quad[1], tipo)
+		if int(param) < 0:
+			print('Error. No se puede calcular el factorial de un entero negativo')
+			sys.exit()
+			return
+		else:
+			param = math.factorial(int(param))
+			auxTipo = getType(quad[3])
+			fillValor(currentEjecucion, quad[3], auxTipo , param)
+
+	elif quad[0] == 'sum':
+		arreglo = [] #almacenara todas las constantes del arreglo
+		memPosBase = int(quad[1]) #toma como entero la memoria base del arreglo
+		columnas = int(quad[2])
+		for x in range (columnas):
+			auxValor = getValor(currentEjecucion, memPosBase+x, getType(memPosBase+x))
+			arreglo.append(float(auxValor))
+		auxTipo = getType(quad[3])
+		fillValor(currentEjecucion, quad[3], auxTipo, np.sum(arreglo))
+	elif quad[0] == 'mean':
+		arreglo = []
+		memPosBase = int(quad[1])
+		columnas = int(quad[2])
+		for x in range(columnas):
+			auxValor = getValor(currentEjecucion, memPosBase+x, getType(memPosBase+x))
+			arreglo.append(float(auxValor))
+		auxTipo = getType(quad[3])
+		fillValor(currentEjecucion, quad[3], auxTipo, np.mean(arreglo))
+	elif quad[0] == 'median':
+		arreglo = []
+		memPosBase = int(quad[1])
+		columnas = int(quad[2])
+		for x in range(columnas):
+			auxValor = getValor(currentEjecucion, memPosBase+x, getType(memPosBase+x))
+			arreglo.append(float(auxValor))
+		auxTipo = getType(quad[3])
+		fillValor(currentEjecucion, quad[3], auxTipo, np.median(arreglo))
+	elif quad[0] == 'mode':
+		arreglo = []
+		memPosBase = int(quad[1])
+		columnas = int(quad[2])
+		for x in range(columnas):
+			auxValor = getValor(currentEjecucion, memPosBase+x, getType(memPosBase+x))
+			arreglo.append(float(auxValor))
+		auxTipo = getType(quad[3])
+		try:
+			res = stats.mode(arreglo)
+			fillValor(currentEjecucion, quad[3], auxTipo, res)
+		except:
+			print("Jubi > El arreglo no tiene una moda definida, se regresa el ultimo valor.")
+			fillValor(currentEjecucion, quad[3], auxTipo, auxValor)
+	elif quad[0] == 'stdev':
+		arreglo = []
+		memPosBase = int(quad[1])
+		columnas = int(quad[2])
+		for x in range(columnas):
+			auxValor = getValor(currentEjecucion, memPosBase+x, getType(memPosBase+x))
+			arreglo.append(float(auxValor))
+		auxTipo = getType(quad[3])
+		fillValor(currentEjecucion, quad[3], auxTipo, np.std(arreglo))
+	elif quad[0] == 'var':
+		arreglo = []
+		memPosBase = int(quad[1])
+		columnas = int(quad[2])
+		for x in range(columnas):
+			auxValor = getValor(currentEjecucion, memPosBase+x, getType(memPosBase+x))
+			arreglo.append(float(auxValor))
+		auxTipo = getType(quad[3])
+		fillValor(currentEjecucion, quad[3], auxTipo, np.var(arreglo))
+	elif quad[0] == 'covariance':
+		quad2 = quadList[quadIndex + 1]
+		arreglo1 = []
+		memPosBase1 = int(quad[1])
+		columnas1 = int(quad[2])
+		arreglo2 = []
+		memPosBase2 = int(quad2[1])
+		columnas2 = int(quad2[2])
+		for x in range(min(columnas1, columnas2)):
+			auxValor1 = getValor(currentEjecucion, memPosBase1+x, getType(memPosBase1+x))
+			auxValor2 = getValor(currentEjecucion, memPosBase2+x, getType(memPosBase2+x))
+			arreglo1.append(auxValor1)
+			arreglo2.append(auxValor2)
+
+		res = np.cov(np.array(arreglo1).astype(np.float), np.array(arreglo2).astype(np.float), bias=True)[0][1]
+		auxTipo = getType(quad2[3])
+		fillValor(currentEjecucion, quad2[3], auxTipo, res)
+		#compensar el quad comido por esta funcion
+		nextQuadIndex = quadIndex + 2
+	elif quad[0] == 'correlation':
+		quad2 = quadList[quadIndex + 1]
+		arreglo1 = []
+		memPosBase1 = int(quad[1])
+		columnas1 = int(quad[2])
+		arreglo2 = []
+		memPosBase2 = int(quad2[1])
+		columnas2 = int(quad2[2])
+		for x in range(min(columnas1, columnas2)):
+			auxValor1 = getValor(currentEjecucion, memPosBase1+x, getType(memPosBase1+x))
+			auxValor2 = getValor(currentEjecucion, memPosBase2+x, getType(memPosBase2+x))
+			arreglo1.append(auxValor1)
+			arreglo2.append(auxValor2)
+		res = np.correlate(np.array(arreglo1).astype(np.float), np.array(arreglo2).astype(np.float))
+		auxTipo = getType(quad2[3])
+		fillValor(currentEjecucion, quad2[3], auxTipo, res[0])
+		#compensar el quad comido por esta funcion
+		nextQuadIndex = quadIndex + 2
+	#Funciones especiales de creacion de arreglos
+	elif quad[0] == 'arrange':
+		lim_inf = getValor(currentEjecucion, quad[1], getType(quad[1]))
+		lim_sup = getValor(currentEjecucion, quad[2], getType(quad[2]))
+		arreglo = np.arange(int(lim_inf),int(lim_sup))
+		for x in range(len(arreglo)):
+			fillValor(currentEjecucion, int(quad[3])+x, getType(int(quad[3])+x), arreglo[x])
+
+	elif quad[0] == 'zeros':
+		size = int(quad[1])
+		arreglo = np.zeros(size)
+		for x in range(len(arreglo)):
+			fillValor(currentEjecucion, int(quad[3])+x, getType(int(quad[3])+x), arreglo[x])
+
+	elif quad[0] == 'ones':
+		size = int(quad[1])
+		arreglo = np.ones(size)
+		for x in range(len(arreglo)):
+			fillValor(currentEjecucion, int(quad[3])+x, getType(int(quad[3])+x), arreglo[x])
+
+	elif quad[0] == 'randint':
+		limites = quad[1]
+		lim_inf = limites[0:limites.find('/')]
+		lim_inf = getValor(currentEjecucion, lim_inf, getType(lim_inf))
+		lim_sup = limites[limites.find('/')+1:]
+		lim_sup = getValor(currentEjecucion, lim_sup, getType(lim_sup))
+		lim_inf = float(lim_inf)
+		lim_sup = float(lim_sup)
+		cuantos = int(quad[2])
+		donde = int(quad[3])
+		resArray = np.random.randint(lim_inf, lim_sup, size=cuantos)
+		for x in range(cuantos):
+			fillValor(currentEjecucion, donde+x, getType(donde+x), resArray[x])
+	elif quad[0] == 'randfloat':
+		limites = quad[1]
+		lim_inf = limites[0:limites.find('/')]
+		lim_inf = getValor(currentEjecucion, lim_inf, getType(lim_inf))
+		lim_sup = limites[limites.find('/')+1:]
+		lim_sup = getValor(currentEjecucion, lim_sup, getType(lim_sup))
+		lim_inf = float(lim_inf)
+		lim_sup = float(lim_sup)
+		cuantos = int(quad[2])
+		donde = int(quad[3])
+		#(b - a) * random_sample() + a
+		resArray = (lim_sup - lim_inf) * np.random.random_sample(cuantos) + lim_inf
+		for x in range(cuantos):
+			fillValor(currentEjecucion, donde+x, getType(donde+x), resArray[x])
+	#Sort & Transpose
+	elif quad[0] == 'sort':
+		memPosBase = int(quad[1])
+		columnas= int(quad[2])
+		if quad[3] == '':
+			renglones = 0
+		else:
+			renglones=int(quad[3])
+		auxArray = []
+		if renglones == 0: #Es un arreglo
+			for x in range(columnas -1):
+				auxArray.append(getValor(currentEjecucion, memPosBase+x, getType(memPosBase+x)))
+		else:
+			for x in range(renglones -1):
+				for y in range(columnas -1):
+					s = memPosBase+y+x*columnas
+					auxArray.append(getValor(currentEjecucion, s, getType(s)))
+		narray = np.array(auxArray)
+		sortedArray = np.sort(narray)
+		if renglones == 0: #Es un arreglo
+			for x in range(columnas -1):
+				fillValor(currentEjecucion, memPosBase+x, getType(memPosBase+x), sortedArray[x])
+		else:
+			for x in range(renglones -1):
+				for y in range(columnas -1):
+					s = memPosBase+y+x*columnas
+					fillValor(currentEjecucion, s, getType(s), sortedArray[x][y])
+
+	elif quad[0] == 'transpose':
+		''' No puedo :/
+		#Algoritmo obtenido de:
+		#https://www.programiz.com/python-programming/examples/transpose-matrix
+		memoriaBase=int(quad[1])
+		columnas= int(quad[2])
+		if quad[3] == '':
+			filas = 1
+		else:
+			filas=int(quad[3])
+		matTemp=[]
+		arrTemp=[]
+		for fila in range(filas -1):
+			arrTemp=[]
+			for columna in range(columnas -1):
+				x=memoriaBase+fila+columna*filas
+				arrTemp.append(getValor(currentEjecucion, x, getType(quad[1])))
+			matTemp.append(arrTemp)
+		for fila in range(filas -1):
+			for columna in range(columnas -1):
+				x=memoriaBase+columna+fila*columnas
+				fillValor(currentEjecucion, x, getType(quad[1]), matTemp[columna][fila])
+		'''
+
+
 	#Habiendo revisado el cuadruplo ir al siguiente cuadruplo a ejecutar
 	#Que si nextQuadIndex sigue en -1, deberia ser el siguiente
 	if nextQuadIndex != -1:

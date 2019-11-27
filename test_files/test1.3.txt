@@ -1,0 +1,41 @@
+program mav:
+
+int y[3] = [-1,-2,-3];
+
+void main(){
+int x = 0;
+int arr[5] = [1,2,3,4,5];
+int arr2[6] = [1,2,3,4,5,6];
+
+print(fact(arr[4]));
+print(sum(arr));
+print(mean(arr));
+print(median(arr));
+print(mode(arr));
+print(stdev(arr));
+print(var(arr));
+
+print(covariance(arr, arr2));
+print(correlation(arr, arr2));
+
+z1 -> arrange(1,6);
+print(z1[3]);
+z2 -> zeros(5);
+print(z2[3]);
+z3 -> ones(4);
+print(z3[3]);
+z4 -> randint(0,5,3);
+print(z4[2]);
+z5 -> randfloat(-1.0,3.0,3);
+print(z5[2]);
+
+float globo [4][2] = [[1.0,2.0,3.0,4.0],[5.0,6.0,7.0,8.0]];
+
+sort(z4);
+print(z4[0]);
+print(z4[2]);
+sort(globo);
+transpose(z1);
+transpose(globo);
+return;
+}

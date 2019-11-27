@@ -31,14 +31,25 @@ class MemoriaVirtual:
     def getValueFromMemory(self, memory, type):
         try:
             #self.printMV()
-            #print("Se quiere hacer get de: ,{}, y ,{}, y valor ,{},".format(type,memory, self.diccionario[str(type)][str(memory)]))
             toReturn = self.diccionario[str(type)][str(memory)]
-            #print("Se hizo get de: ,{}, y ,{}, y valor ,{},{}".format(type,memory, toReturn),type(toReturn))
             return toReturn
         except:
             print("Unexpected error:", sys.exc_info()[0])
-            print("Error. El espacio de memoria {} no existe en la funcion:{}.".format(memory, self.nombre))
+            print("Error. El espacio de memoria {} con tipo {} no existe en la funcion:{}.".format(memory, type, self.nombre))
+            self.printMV()
             raise #Elevar el error para que lo pueda checar en Maq Virt
+    '''
+    Funcion para obtener la direccion de memoria donde guardar el sig parametro
+    '''
+    def nextToSaveParam(self, type, initial_local, batch_size):
+        base = initial_local
+        if type == 'int':
+            base = initial_local
+        elif type == 'float':
+            base = initial_local + batch_size
+        elif type == 'bool':
+            base = initial_local + batch_size + batch_size
+        return base + len(self.diccionario[type])
 
     '''
     Desplegar el diccionario y su contenido

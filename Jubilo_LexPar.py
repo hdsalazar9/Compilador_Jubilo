@@ -796,7 +796,7 @@ def p_constante(p):
               | MINUS_OP pnNegConst constante_num
               | constante_num
     '''
-    #Correcion para que funcione incluso cuando es un número negativo
+    #Correcion para que funcione incluso cuando es un numero negativo
     if p[1] == '-':
         p[0] = -1 * p[3]
     else:
@@ -814,8 +814,12 @@ def p_constante_num(p):
 
 def p_main(p):
     '''
-    main : VOID MAIN pnFillGotoMain LPAREN RPAREN pnCreateFunctionMain bloque pnEndProc
+    main : VOID MAIN pnFillGotoMain LPAREN RPAREN pnCreateFunctionMain bloque
     '''
+    global yaSeRetorno
+    if yaSeRetorno == False: #No se ha regresado nada
+        sys.exit("Error. Se ocupa crear un Retorno en todas las funciones.")
+        return
 
 def p_bloque(p):
     'bloque : LCURLY bloque_predicate RCURLY'
@@ -1089,7 +1093,7 @@ def p_pnGotoMain(p):
     pushSalto(nextQuad() - 1)
 
 '''
-Rellena el GOTO Main con el cuádruplo donde inicia
+Rellena el GOTO Main con el cuadruplo donde inicia
 '''
 def p_pnFillGotoMain(p):
     '''
@@ -1643,7 +1647,6 @@ def p_pnInsertParams(p):
     global currentContParameters
     dirFunciones.update_functionParams(currentFunction, currentContParameters)
 
-
 #Genera la accion para finalizar la funcion
 def p_pnEndProc(p):
     '''
@@ -1682,10 +1685,9 @@ def p_pnQuadEra(p):
     global pArgumentos
 
     function = p[-3] #toma el nombre de la funcion
-    print("HUEVOOOOS", function)
     # 1. Verify that the procedure exists into the DirFunc
     if function in dirFunciones.diccionario:
-        pFunciones.append(function) #añade la funcion a la pila de funciones
+        pFunciones.append(function) #anade la funcion a la pila de funciones
         #print(pFunciones)
         # 2. Generate action ERA size
         printAuxQuad('ERA', function, '', '') #genera cuadruplo ERA con el nombre de a funcion
@@ -1791,6 +1793,9 @@ def p_pnQuadRetorno(p):
     global currentFunction
     global flagRetorno #SAber si tengo que regresar un valor o no
     global yaSeRetorno
+    if currentFunction == 'main':
+        yaSeRetorno = True
+        return
 
     if not flagRetorno:
         if p[-1] == 'return':
@@ -2166,7 +2171,7 @@ def p_pnValidateExchange(p):
     typeVarY = dirFunciones.search_varType(auxContextY, paramY)
     memVarY = dirFunciones.search_memPos(auxContextY, paramY) #Memoria base de Y
 
-    #Hacer el intercambio de valores de una variable a otra, pudiendo ser variables dimensioandas de mismo tamaño
+    #Hacer el intercambio de valores de una variable a otra, pudiendo ser variables dimensioandas de mismo tamano
     if dimsVarX[0] == 0: #X no es dimensionada
         if dimsVarY[0] != 0: #Pero Y si es dimensionada
             sys.exit("Error. Para la funcion {}, se necesitan dos variables de las mismas dimensiones.".format(specialFunction))
