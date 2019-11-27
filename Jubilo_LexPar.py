@@ -461,6 +461,9 @@ def printErrorOutOfBounds(tipoMemoria,tipoDato):
 #y dos operandos junto con su tipo
 def printErrorOperacionInvalida(rOp, rTy, lOp, lTy, Op):
     print("Error: Imposible realizar operacion {} con operadores ({} de tipo {}) y ({} de tipo {}).".format(Op, rOp, rTy, lOp, lTy))
+    sys.exit()
+    return
+
 
 def printTypeMismatch():
     print('Error: Tipo de dato incorrecto')
@@ -553,7 +556,7 @@ def t_INT_CTE(t):
     return t
 
 def t_STRING_CTE(t):
-    r'\"[a-zA-Z0-9_\.\_]*\"'
+    r'("[^"]*")'
     t.value = str(t.value)
     return t
 
@@ -1504,7 +1507,7 @@ def p_pnQuadGenCycle3(p):
     '''
     end = popSaltos()
     retorno = popSaltos()
-    printAuxQuad('GOTO', retorno, '','')
+    printAuxQuad('GOTO', '', '',retorno)
     auxQuad = (arregloQuads[end][0], arregloQuads[end][1], arregloQuads[end][2], nextQuad())
     arregloQuads[end] = auxQuad
 
@@ -2499,12 +2502,11 @@ def p_pnAccessArray(p):
             return
 
         #Calcular memoria del indice, creando un cuadruplo de la suma de la direccion de memoria base con el contenido de auxMem
-        contenidoDeAuxMem = '(' + str(auxMem) + ')'
         temporalAccessMem = nextTemporalAvail('int')
-        printAuxQuad('+', varMemPos, contenidoDeAuxMem, temporalAccessMem)
+        printAuxQuad('+', varMemPos, auxMem, temporalAccessMem)
         #No se le suma memoria base, porque es 0
         #Pushear indice a las pilas
-        contenidoDeTempAccessMem = '(' + str(temporalAccessMem) + ')'
+        contenidoDeTempAccessMem = '{' + str(temporalAccessMem) + '}'
         pushOperando(currentVar)
         pushMemoria(contenidoDeTempAccessMem)
         pushTipo(currentVarTipo)
@@ -2587,11 +2589,11 @@ def p_pnAccessMatrix(p):
         printAuxQuad('+', temporalAccessMem, colMem, temporalAccessMem2)
         # (temporalAccessMem2) + dirBase
         temporalAccessMem3 = nextTemporalAvail('int')
-        contenidoDeAuxMem = '(' + str(temporalAccessMem2) + ')'
-        printAuxQuad('+', varMemPos, contenidoDeAuxMem, temporalAccessMem3)
+        auxStr = '~' + str(varMemPos)
+        printAuxQuad('+', auxStr, temporalAccessMem2, temporalAccessMem3)
 
         #Pushear indice de memoria a las pilas
-        contenidoDeTempAccessMem = '(' + str(temporalAccessMem3) + ')'
+        contenidoDeTempAccessMem = '{' + str(temporalAccessMem3) + '}'
         pushOperando(currentVar)
         pushMemoria(contenidoDeTempAccessMem)
         pushTipo(currentVarTipo)

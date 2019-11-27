@@ -11,9 +11,9 @@ class MemoriaVirtual:
     def __init__(self, nombreFunc):
         '''
         Diccionario de las direcciones de memoria para la funcion actual
-        diccionario = {'int': {}, 'float' : {}, 'bool' : {}}
+        diccionario = {'int': {}, 'float' : {}, 'bool' : {}, 'string':{}}
         '''
-        self.diccionario = { 'int' : {}, 'float' : {}, 'bool' : {}}
+        self.diccionario = { 'int' : {}, 'float' : {}, 'bool' : {'12000':True,'12001':False}, 'string' : {}}
         self.nombre = nombreFunc
 
     '''
@@ -21,23 +21,28 @@ class MemoriaVirtual:
     en el diccionario de tipo (type) en la funcion actual
     '''
     def fillMemory(self, memory, type, value):
-        #print("Se quiere hacer fill de: '{}' y '{}'".format(type,memory))
-        self.diccionario[type][memory] = value
+        self.diccionario[str(type)][str(memory)] = value
+        #self.printMV()
+
     '''
     Funcion para retornar el valor de un espacio de memoria(memory) de una
     variable de tipo (type)
     '''
     def getValueFromMemory(self, memory, type):
         try:
-            toReturn = self.diccionario[type][memory]
+            #self.printMV()
+            #print("Se quiere hacer get de: ,{}, y ,{}, y valor ,{},".format(type,memory, self.diccionario[str(type)][str(memory)]))
+            toReturn = self.diccionario[str(type)][str(memory)]
+            #print("Se hizo get de: ,{}, y ,{}, y valor ,{},{}".format(type,memory, toReturn),type(toReturn))
             return toReturn
         except:
-            print("Error. Ese espacio de memoria no existe en la funcion:{}.".format(self.nombre))
+            print("Unexpected error:", sys.exc_info()[0])
+            print("Error. El espacio de memoria {} no existe en la funcion:{}.".format(memory, self.nombre))
             raise #Elevar el error para que lo pueda checar en Maq Virt
 
     '''
     Desplegar el diccionario y su contenido
     '''
-    def print():
+    def printMV(self):
         print("Memoria virtual de {}: \n".format(self.nombre))
         print(self.diccionario)

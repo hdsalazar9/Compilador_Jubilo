@@ -1,7 +1,34 @@
 program pato:
 
 void main(){
-	int x = 2 + 2;
-	print(x);
+	int x = 1;
+	int y;
+	read(y);
+	float z = 3.0;
+	print("Antes del if:");
+	if(y > 10){
+	print(x + 1);
+	print(y - 1);
+	print(x * y);
+	print(z / x);
+	print(x < y);
+	print(x > y);
+	y = 1;
+	print(x >= y);
+	print(x <= y);
+	print(x == y);
+	print(x != y);
+	print(false && true);
+	print(true && true);
+	print(true || false);
+	print(true || true);
+	};
+	print("Antes del while:");
+	int indx = 0;
+	while(indx < y){
+	print(indx);
+	print("-----");
+	indx = indx + 1;
+	};
 	return;
 }

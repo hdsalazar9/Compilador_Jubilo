@@ -1,0 +1,18 @@
+program mav:
+
+int x = 0;
+
+void main(){
+
+int mat[3][2] = [[1,2,3],[4,5,6]];
+int asigna[3] = [10,20,30];
+
+print(mat[1][0]);
+
+int lmao = 909;
+
+read(mat[2][1]);
+print(mat[2][1] - 10);
+
+return;
+}
