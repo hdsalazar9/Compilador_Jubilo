@@ -92,6 +92,70 @@ Int, Float, Bool
 <p>Parámetro(s) esperados: un arreglo de ints o floats, una constante entera mayor a 0 </p>
 <p>Tipo de retorno: bool </p>
 
+<h3>LINEAREG</h3>
+<p>Muestra una gráfica de regresión lineal para dos arreglos enviados como parámetros: lineareg(arregloX, arregloY)</p>
+<p>Parámetro(s) esperados: dos arreglos de ints o floats</p>
+<p>Tipo de retorno: bool </p>
+
+<h3>SORT</h3>
+<p>Ordena los elementos de un arreglo enviado como parámetro: sort(arregloX)</p>
+<p>Parámetro(s) esperados: un arreglo de ints o floats</p>
+<p>Tipo de retorno: int o float </p>
+
+<h3>TRANSPOSE</h3>
+<p>Realiza la transpuesta de una matriz enviada como parámetro: transpose(matrixX)</p>
+<p>Parámetro(s) esperados: una matriz de ints o floats</p>
+<p>Tipo de retorno: int o float </p>
+
+<h3>EXPORTCSV</h3>
+<p>Crea un archivo de tipo csv con el nombre enviado como parámetro. El archivo CSV muestra en forma de dataframe el arreglo o matriz enviado como segundo parámetro : exportcsv('myCSV.csv', matrizX)</p>
+<p>Parámetro(s) esperados: constante string, arreglo o matriz de tipo entero o flotante</p>
+<p>Tipo de retorno: bool </p>
+
+<h3>EXCHANGE</h3>
+<p>Toma dos valores enviados como parámetros (X, Y) y asigna Y a X y X a Y: exchange(x, y)</p>
+<p>Parámetro(s) esperados: dos variables no dimensionadas ints o floats </p>
+<p>Tipo de retorno: int o float </p>
+
+<h2>Funciones especiales que crean arreglos </h2>
+<p>Este tipo de funciones especiales no pueden usarse como operandos </p>
+
+<h3>ARRANGE</h3>
+<p>Crea un arreglo desde el límite inferior enviado como parámetro hasta el límite superior enviado como segundo parámetro - 1</p>
+<p> EJEMPLO. arregloX -> arrange(2,9) = [2,3,4,5,6,7,8]</p>
+<p>Parámetro(s) esperados: dos valores enteros </p>
+<p>Tipo de retorno: int </p>
+
+<h3>ZEROS</h3>
+<p>Crea un arreglo de 0s del tamaño enviado como parámetro </p>
+<p> EJEMPLO. arregloX -> zeros(7) = [0,0,0,0,0,0,0]</p>
+<p>Parámetro(s) esperados: un valor entero mayor a 0 </p>
+<p>Tipo de retorno: int </p>
+
+<h3>ONES</h3>
+<p>Crea un arreglo de 1s del tamaño enviado como parámetro </p>
+<p> EJEMPLO. arregloX -> zeros(7) = [1,1,1,1,1,1,1]</p>
+<p>Parámetro(s) esperados: un valor entero mayor a 0 </p>
+<p>Tipo de retorno: int </p>
+
+<h3>RANDINT</h3>
+<p>Crea un arreglo de enteros aleatorios desde el límite inferior enviado como parámetro hasta el límite superior enviado como segundo parámetro, el tamaño del arreglo está definido por el tercer parámetro </p>
+<p> EJEMPLO. arregloX -> randint(0, 20, 5) = [18, 4, 7, 16, 2]</p>
+<p>Parámetro(s) esperados: valor entero, valor entero, constante entera </p>
+<p>Tipo de retorno: int </p>
+
+<h3>RANDFLOAT</h3>
+<p>Crea un arreglo de enteros aleatorios desde el límite inferior enviado como parámetro hasta el límite superior enviado como segundo parámetro, el tamaño del arreglo está definido por el tercer parámetro </p>
+<p> EJEMPLO. arregloX -> randfloat(2.2, 20.5, 5) = [18.34, 12.54, 8.53, 3.45, 2.23]</p>
+<p>Parámetro(s) esperados: valor entero o flotante, valor entero o flotante, constante entera </p>
+<p>Tipo de retorno: float</p>
+
+
+
+
+
+
+
 
 
 
