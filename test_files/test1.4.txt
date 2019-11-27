@@ -1,0 +1,18 @@
+program recursiveFactorial:
+
+func int factorial(int x){
+    if (x<=1){
+        return 1;
+    }
+    else{
+        return x * (factorial(x-1));
+    };
+}
+
+void main(){
+    int n;
+    print("Factorial de: ingresa numero entero");
+    read(n);
+    print(factorial(n));
+    return;
+}

@@ -888,17 +888,17 @@ def p_asignacion(p):
 def p_asignacion_predicate(p):
     '''
     asignacion_predicate : empty
-                         | LBRACK pnDetectDimensionada pnQuadGenExp6 full_exp RBRACK pnQuadGenExp7 asignacion_array_predicate
+                         | LBRACK pnDetectDimensionada pnQuadGenExp6 full_exp pnReturnToDimensionado RBRACK pnQuadGenExp7 asignacion_array_predicate
     '''
 
 def p_asignacion_array_predicate(p):
     '''
     asignacion_array_predicate : empty pnAccessArray
-                               | LBRACK pnQuadGenExp6 full_exp RBRACK pnQuadGenExp7 pnAccessMatrix
+                               | LBRACK pnQuadGenExp6 full_exp pnReturnToDimensionado RBRACK pnQuadGenExp7 pnAccessMatrix
     '''
 
 def p_condicion(p):
-    'condicion : IF LPAREN full_exp RPAREN pnQuadGenCond1 bloque condicion_else SEMIC pnQuadGenCond2'
+    'condicion : IF LPAREN pnQuadGenExp6 full_exp RPAREN pnQuadGenExp7 pnQuadGenCond1 bloque condicion_else SEMIC pnQuadGenCond2'
     p[0] = "Condicion"
 
 def p_condicion_else(p):
@@ -924,7 +924,7 @@ def p_lectura(p):
 
 def p_ciclo(p):
     '''
-    ciclo : WHILE pnQuadGenCycle1 LPAREN full_exp RPAREN pnQuadGenCycle2 bloque SEMIC pnQuadGenCycle3
+    ciclo : WHILE pnQuadGenCycle1 LPAREN pnQuadGenExp6 full_exp RPAREN pnQuadGenExp7 pnQuadGenCycle2 bloque SEMIC pnQuadGenCycle3
     '''
 
 def p_full_exp(p):
@@ -1143,12 +1143,14 @@ def p_pnQuadGenExp1(p):
     isDimensionada = dirFunciones.isVarDimensionada(currentFunction, varId)
     if isDimensionada == -1: #No esta en ese contexto, buscar en globales
         isDimensionada = dirFunciones.isVarDimensionada(GLOBAL_CONTEXT, varId)
+        print("es global?")
 
     if isDimensionada == 1:
         flagDimensionada = True
         currentVar = varId
     elif isDimensionada == 0:
         flagDimensionada = False
+        print("Aqui entre...")
     else:
         flagDimensionada = False
         print("Error: Variable ", varId , " no declarada. :", varMemPos)
@@ -2306,6 +2308,13 @@ def p_pnDetectDimensionada(p):
     varId = popOperandos()
     varMem = popMemorias()
 
+def p_pnReturnToDimensionado(p):
+    '''
+    pnReturnToDimensionado :
+    '''
+    global flagDimensionada
+    flagDimensionada = True
+
 #Funcion que recibe el numero de columnas
 def p_pnGetColumnas(p):
     '''
@@ -2479,7 +2488,7 @@ def p_pnAccessArray(p):
         if varDims == -1: #Si no existe buscar en contexto global
             varDims = dirFunciones.getDimensiones(GLOBAL_CONTEXT, currentVar)
             if varDims == -1:
-                print('ERROR. No se puede acceder por index a una variable no dimensionada')
+                print('ERROR. No se puede acceder por index a una variable no dimensionada1', currentVar)
                 sys.exit()
                 return
 
@@ -2519,7 +2528,7 @@ def p_pnAccessArray(p):
         currentVar = ''
 
     else:
-        print('ERROR. No se puede acceder por index a una variable no dimensionada')
+        print('ERROR. No se puede acceder por index a una variable no dimensionada2',currentVar)
         sys.exit()
         return
 
@@ -2556,7 +2565,7 @@ def p_pnAccessMatrix(p):
         if varDims == -1: #Si no existe buscar en contexto global
             varDims = dirFunciones.getDimensiones(GLOBAL_CONTEXT, currentVar)
             if varDims == -1:
-                print('ERROR. No se puede acceder por index a una variable no dimensionada')
+                print('ERROR. No se puede acceder por index a una variable no dimensionada3',currentVar)
                 sys.exit()
                 return
 
@@ -2605,7 +2614,7 @@ def p_pnAccessMatrix(p):
         flagDimensionada = False #regresa la bandera a falso para detectar futuras variables dimensionadas
         currentVar = ''
     else:
-        print('ERROR. No se puede acceder por index a una variable no dimensionada')
+        print('ERROR. No se puede acceder por index a una variable no dimensionada4', currentVar)
         sys.exit()
         return
 
