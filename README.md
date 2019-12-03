@@ -1,4 +1,12 @@
 # Compilador_Jubilo 
+<p> Para la correcta ejecución de Júbilo es necesario tener importadas las siguientes librerías</p>
+<p> import numpy as np </p>
+<p> import statistics as stats </p>
+<p> import math </p>
+<p> import matplotlib.pyplot as plt </p>
+<p> import pandas as pd </p>
+<p> from sklearn.linear_model import LinearRegression </p>
+
 <h3>Quick Reference Manual</h3>
 
 <h2>Tipos de datos</h2>
