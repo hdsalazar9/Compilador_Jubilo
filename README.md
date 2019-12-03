@@ -1,5 +1,5 @@
 # Compilador_Jubilo 
-<p> Para la correcta ejecución de Júbilo es necesario tener importadas las siguientes librerías</p>
+<p> Para la correcta ejecución de Júbilo es necesario tener importadas *e instaladas* las siguientes librerías</p>
 <p> import numpy as np </p>
 <p> import statistics as stats </p>
 <p> import math </p>
